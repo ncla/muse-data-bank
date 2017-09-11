@@ -1,0 +1,6 @@
+.env
+node_modules/
+sqlite.db
+bot.json
+logs/
+.idea/
