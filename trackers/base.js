@@ -2,6 +2,7 @@
 
 var NotifyManager = require('./../notify_manager');
 var winston = require('winston');
+var Promise = require("bluebird");
 
 class Tracker
 {
@@ -30,36 +31,58 @@ class Tracker
         }
 
         winston.info(this.constructor.name + ' :: Checking for new entries');
-
-        var promises = [];
-
-        this.dataEntries.forEach(function (currentValue, index) {
+        
+        return Promise.map(this.dataEntries, (entryValue, entryIndex) => {
             var reMapped = {};
 
             // Re-mapping
             for (var dbColumnName in this.dbCheckAgainst) {
                 if (this.dbCheckAgainst.hasOwnProperty(dbColumnName)) {
-                    reMapped[dbColumnName] = currentValue[this.dbCheckAgainst[dbColumnName]];
+                    reMapped[dbColumnName] = entryValue[this.dbCheckAgainst[dbColumnName]];
                 }
             }
 
-            // console.log(this.dbCheckAgainst, currentValue, reMapped);
+            // console.log(this.dbCheckAgainst, entryValue, reMapped);
 
-            var promise = knex.select().from(this.dbTable).where(reMapped).then((rows) => {
+            return knex.select().from(this.dbTable).where(reMapped).then((rows) => {
                     if (rows.length === 0) {
-                        this.dataEntries[index]['isNewEntry'] = true;
-                        NotifyManager.add(this.composeNotificationMessage(this.dataEntries[index]));
-                        //console.log(this.dataEntries[index]);
+                        this.dataEntries[entryIndex]['isNewEntry'] = true;
+                        NotifyManager.add(this.composeNotificationMessage(this.dataEntries[entryIndex]));
+                        //console.log(this.dataEntries[entryIndex]);
                     } else {
-                        //console.log('nononoonon', this.dataEntries[index]['entry_id']);
+                        //console.log('nononoonon', this.dataEntries[entryIndex]['entry_id']);
                     }
                 }
             );
+        });
 
-            promises.push(promise);
-        }, this);
-
-        return Promise.all(promises);
+        // this.dataEntries.forEach(function (currentValue, index) {
+        //     var reMapped = {};
+        //
+        //     // Re-mapping
+        //     for (var dbColumnName in this.dbCheckAgainst) {
+        //         if (this.dbCheckAgainst.hasOwnProperty(dbColumnName)) {
+        //             reMapped[dbColumnName] = currentValue[this.dbCheckAgainst[dbColumnName]];
+        //         }
+        //     }
+        //
+        //     // console.log(this.dbCheckAgainst, currentValue, reMapped);
+        //
+        //     var promise = knex.select().from(this.dbTable).where(reMapped).then((rows) => {
+        //             if (rows.length === 0) {
+        //                 this.dataEntries[index]['isNewEntry'] = true;
+        //                 NotifyManager.add(this.composeNotificationMessage(this.dataEntries[index]));
+        //                 //console.log(this.dataEntries[index]);
+        //             } else {
+        //                 //console.log('nononoonon', this.dataEntries[index]['entry_id']);
+        //             }
+        //         }
+        //     );
+        //
+        //     promises.push(promise);
+        // }, this);
+        //
+        // return Promise.all(promises);
     }
 
     insertNewEntries(knex) {
@@ -73,7 +96,7 @@ class Tracker
 
         winston.info(this.constructor.name + ' :: Inserting new entries');
 
-        this.dataEntries.forEach((entryValue, entryIndex) => {
+        return Promise.map(this.dataEntries, (entryValue, entryIndex) => {
             if (entryValue.isNewEntry === true) {
                 var reMapped = {};
 
@@ -84,17 +107,12 @@ class Tracker
                     }
                 }, this);
 
-                console.log(reMapped.entry_id);
-
-                // We do not care to wait for the inserts to finish to continue with other stuff
-                // TODO: Maybe change this behaviour?
-                knex.insert(reMapped).returning('id').into(this.dbTable)
-                    .then((id) => console.log(id))
-                    .catch((err) => winston.error('DB Error', err));
+                return knex.insert(reMapped).returning('id').into(this.dbTable)
+                    .catch((err) => winston.error('DB Error', err, err.stack));
+            } else {
+                return Promise.resolve();
             }
-        }, this);
-
-        return this;
+        });
     }
 
     composeNotificationMessage(entry) {
@@ -104,6 +122,7 @@ class Tracker
     }
 
     updateDb() {
+        // TODO: Not Promise based
         this.compareWithDb();
         this.insertNewEntries();
     }

@@ -98,7 +98,7 @@ class InstagramPostTracker extends Tracker {
                 "description": entry.entry_description,
                 "url": `https://www.instagram.com/p/${entry.entry_link_id}/`,
                 "timestamp": entry.entry_created_at,
-                "color": "15105570",
+                "color": "15844367",
                 "author": {
                     "name": entry.user_name,
                     "icon_url": entry.user_avatar

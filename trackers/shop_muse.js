@@ -85,6 +85,7 @@ class ShopMuseTracker extends Tracker {
 
             $('li.item').each((i, v) => {
 
+                // TODO: Key each entry with entry_id to avoid duplicates and errors of duplicate inserts (when initially ran)
                 dataEntries.push({
                     entry_id: $(v).attr('data-product_id'),
                     entry_text: $(v).find('a').eq(0).attr('title'),

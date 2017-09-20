@@ -5,6 +5,7 @@ var TwitterLikesTracker = require('./trackers/twitter_likes');
 var TwitterFollowingTracker = require('./trackers/twitter_following');
 var InstagramPostTracker = require('./trackers/instagram_posts');
 var InstagramFollowingTracker = require('./trackers/instagram_following');
+var InstagramStoriesTracker = require('./trackers/instagram_stories');
 var RedditPostTracker = require('./trackers/reddit_posts');
 var MuseGigTracker = require('./trackers/musemu_gigs');
 var MuseNewsTracker = require('./trackers/musemu_news');
@@ -48,7 +49,8 @@ winston.configure({
             filename: './logs/log',
             datePattern: 'yyyy-MM-dd.',
             prepend: true,
-            level: 'debug'
+            level: 'debug',
+            json: false
         }),
         new winston.transports.DailyRotateFile({
             name: 'daily-error-file',
@@ -56,7 +58,10 @@ winston.configure({
             datePattern: 'yyyy-MM-dd.',
             prepend: true,
             level: 'error',
-            handleExceptions: true
+            handleExceptions: true,
+            humanReadableUnhandledException: true,
+            prettyPrint: true,
+            json: false
         }),
     ]
 });
@@ -104,7 +109,7 @@ readOptionsFile.then(function (data) {
     var usersToTrack = JSON.parse(stripJsonComments(data));
 
     var trackers = {
-        TwitterTweet: new TwitterTweetTracker({
+        TwitterTweets: new TwitterTweetTracker({
             consumer_key: env.TWITTER_CONSUMER_KEY,
             consumer_secret: env.TWITTER_CONSUMER_SECRET
         }, usersToTrack.twitter),
@@ -119,11 +124,13 @@ readOptionsFile.then(function (data) {
             consumer_secret: env.TWITTER_CONSUMER_SECRET
         }, usersToTrack.twitter),
 
-        InstagramPost: new InstagramPostTracker(null, usersToTrack.instagram),
+        InstagramPosts: new InstagramPostTracker(null, usersToTrack.instagram),
 
         InstagramFollowing: new InstagramFollowingTracker({userName: env.INSTAGRAM_USERNAME, password: env.INSTAGRAM_PASSWORD}, usersToTrack.instagram),
 
-        RedditPost: new RedditPostTracker({
+        InstagramStories: new InstagramStoriesTracker({userName: env.INSTAGRAM_USERNAME, password: env.INSTAGRAM_PASSWORD}, usersToTrack.instagram),
+
+        RedditPosts: new RedditPostTracker({
             clientId: env.REDDIT_CLIENT_ID,
             clientSecret: env.REDDIT_CLIENT_SECRET,
             username: env.REDDIT_USERNAME,
@@ -151,8 +158,6 @@ readOptionsFile.then(function (data) {
         }
     }
 
-    console.log(trackersActive.length, trackersActive);
-
     if (trackersActive.length === 0) {
         winston.info('No active trackers');
         return;
@@ -163,15 +168,18 @@ readOptionsFile.then(function (data) {
     winston.profile('all-trackers');
 
     for (let tracker of trackersActive) {
-        // todo: read more about arrow functions
         trackerPromises.push(tracker.pullData().then(() => {
             winston.info(tracker.constructor.name + ' :: Data pull successful');
         }).catch(err => winston.error(err))
             .then(() => tracker.compareWithDb(db))
             .then(() => {
                 if (argv.noinsert !== true) {
-                    tracker.insertNewEntries(db)
+                     return tracker.insertNewEntries(db).then(() => {
+                         winston.info(tracker.constructor.name + ' :: Insertion completed ( ͡° ͜ʖ ͡°)');
+                     });
                 }
+
+                return Promise.resolve();
             })
             .catch(err => winston.error(err)));
     }
@@ -185,6 +193,6 @@ readOptionsFile.then(function (data) {
             NotifyManager.notify();
         }
 
-    })
+    });
 
 }).catch((err) => { console.error(err, err.stack); });

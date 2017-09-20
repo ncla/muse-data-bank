@@ -73,12 +73,12 @@ class InstagramFollowingTracker extends Tracker {
 
     composeNotificationMessage(entry) {
         return {
-            title: `**${entry.user_name}** followed an account on Twitter`,
+            title: `**${entry.user_name}** followed an account on Instagram`,
             embed: {
                 "type": "rich",
                 "description": `[${entry.entry_user_fullname}](https://instagram.com/${entry.entry_username})`,
                 "timestamp": entry.entry_created_at,
-                "color": "3447003",
+                "color": "15844367",
                 "thumbnail": {
                     "url": entry.entry_user_avatar
                 }

@@ -50,7 +50,6 @@ class TwitterFollowingTracker extends TwitterTweeetTracker
         return {
             title: `**${entry.user_name}** followed an account on Twitter`,
             embed: {
-                // "title": entry.entry_text,
                 "type": "rich",
                 "description": entry.entry_description,
                 "timestamp": entry.entry_created_at,

@@ -128,12 +128,14 @@ exports.down = function(knex, Promise) {
         knex.schema.dropTable('twitter_likes'),
         knex.schema.dropTable('twitter_following'),
         knex.schema.dropTable('instagram_posts'),
+        knex.schema.dropTable('instagram_following'),
         knex.schema.dropTable('reddit_posts'),
         knex.schema.dropTable('musemu_gigs'),
         knex.schema.dropTable('musemu_news'),
         knex.schema.dropTable('shop_muse'),
         knex.schema.dropTable('shop_bravadousa'),
         knex.schema.dropTable('facebook_posts'),
-        knex.schema.dropTable('bootlegs')
+        knex.schema.dropTable('bootlegs'),
+        knex.schema.dropTable('youtube_uploads')
     ]);
 };
