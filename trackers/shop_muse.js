@@ -30,7 +30,8 @@ class ShopMuseTracker extends Tracker {
 
                 request({
                     url: task.url,
-                    method: 'GET'
+                    method: 'GET',
+                    timeout: (30 * 1000)
                 }, (error, response, body) => {
                     if (error) {
                         reject(error);

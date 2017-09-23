@@ -28,7 +28,8 @@ class MuseNewsTracker extends Tracker {
         return new Promise((resolve, reject) => {
             request({
                 'url': 'http://muse.mu/rss/news',
-                'method': 'GET'
+                'method': 'GET',
+                timeout: (30 * 1000)
             }, (error, response, body) => {
                 if (error) {
                     reject(error);

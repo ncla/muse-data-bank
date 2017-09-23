@@ -28,7 +28,8 @@ class MuseGigTracker extends Tracker {
         return new Promise((resolve, reject) => {
             request({
                 'url': 'http://muse.mu/rss/gigs',
-                'method': 'GET'
+                'method': 'GET',
+                timeout: (30 * 1000)
             }, (error, response, body) => {
                 if (error) {
                     reject(error);

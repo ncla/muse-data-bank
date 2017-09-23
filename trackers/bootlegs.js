@@ -37,6 +37,7 @@ class MuseBootlegsTracker extends Tracker
                 loginbox_membername: this.credentials.username,
                 loginbox_password: this.credentials.password
             },
+            timeout: (30 * 1000),
             transform: rTransform
         }).then((data) => {
             console.log(this.constructor.name + ' :: ' + data.response.request.href + ', Status: ' + data.response.statusCode);
@@ -47,11 +48,10 @@ class MuseBootlegsTracker extends Tracker
                 formData: {
                     'sortOptions[sortBy]': 'added',
                     'sortOptions[sortOrder]': 'desc'
-                }
+                },
+                timeout: (30 * 1000)
             });
         }).then((r) => {
-            console.log(r.length);
-
             let $ = cheerio.load(r);
 
             $('#content > .torrent-box[id^="torrent_"]').each((i, v) => {

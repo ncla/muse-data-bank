@@ -32,7 +32,8 @@ class InstagramPostTracker extends Tracker {
                 headers: {
                     'Content-type': 'application/json'
                 },
-                json: true
+                json: true,
+                timeout: (30 * 1000)
             }).then((data) => {
                 for (let value of data.items) {
                     this.dataEntries.push({
@@ -65,10 +66,8 @@ class InstagramPostTracker extends Tracker {
                     "name": entry.user_name,
                     "icon_url": entry.user_avatar
                 },
-                "thumbnail": {
-                    "url": entry.entry_image,
-                    "height": 150, // Resolution changes do not work on Discord. Perhaps I am passing it incorrectly
-                    "width": 150
+                "image": {
+                    "url": entry.entry_image
                 }
             }
         };

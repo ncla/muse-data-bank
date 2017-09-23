@@ -50,7 +50,8 @@ winston.configure({
             datePattern: 'yyyy-MM-dd.',
             prepend: true,
             level: 'debug',
-            json: false
+            json: false,
+            maxDays: 3
         }),
         new winston.transports.DailyRotateFile({
             name: 'daily-error-file',
@@ -61,7 +62,8 @@ winston.configure({
             handleExceptions: true,
             humanReadableUnhandledException: true,
             prettyPrint: true,
-            json: false
+            json: false,
+            maxDays: 3
         }),
     ]
 });
