@@ -5,7 +5,6 @@ var request = require('request');
 var moment = require('moment');
 const snoowrap = require('snoowrap');
 var winston = require('winston');
-var dedent = require('dedent-js');
 
 class RedditPostTracker extends Tracker {
     constructor(credentials, usersToTrack) {
@@ -30,9 +29,7 @@ class RedditPostTracker extends Tracker {
     pullData() {
 
         return this.client.getSubreddit('muse').getNew().then((posts) => {
-            console.log(posts);
             posts.forEach(function (post) {
-                console.log(post.thumbnail);
                 this.dataEntries.push({
                     user_id: post.author.name,
                     user_name: post.author.name,

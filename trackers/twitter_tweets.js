@@ -6,6 +6,8 @@ var fs = require('fs');
 var moment = require('moment');
 var winston = require('winston');
 var dedent = require('dedent-js');
+var _ = require('underscore');
+const Promise = require('bluebird');
 
 class TwitterTweetTracker extends Tracker
 {
@@ -29,33 +31,22 @@ class TwitterTweetTracker extends Tracker
     }
 
     pullData() {
-        var promises = [];
-
-        for (let user of this.usersToTrack) {
-            if (user.tweets === true) {
-                // TODO: Maybe rewrite this to have manual resolving/rejecting Promises
-                promises.push(this.client.get('statuses/user_timeline', { user_id: user.id }, (err, data, response) => {
-                    // console.log(user.name);
-                    // console.log(data[0].text);
-                    //
-                    //console.log(data[0]);
-                    for (let value of data) {
-                        this.dataEntries.push({
-                            user_id: value.user.id_str,
-                            user_name: value.user.name,
-                            user_screenname: value.user.screen_name,
-                            user_avatar: value.user.profile_image_url_https,
-                            entry_id: value.id_str,
-                            entry_text: value.text,
-                            entry_created_at: moment(value.created_at, 'dd MMM DD HH:mm:ss ZZ YYYY').utc().format('YYYY-MM-DD HH:mm:ss'),
-                            isNewEntry: false
-                        });
-                    }
-                }));
-            }
-        }
-
-        return Promise.all(promises);
+        return Promise.map(_.where(this.usersToTrack, {tweets: true}), (user) => {
+            return this.client.get('statuses/user_timeline', { user_id: user.id }, (err, data, response) => {
+                for (let value of data) {
+                    this.dataEntries.push({
+                        user_id: value.user.id_str,
+                        user_name: value.user.name,
+                        user_screenname: value.user.screen_name,
+                        user_avatar: value.user.profile_image_url_https,
+                        entry_id: value.id_str,
+                        entry_text: value.text,
+                        entry_created_at: moment(value.created_at, 'dd MMM DD HH:mm:ss ZZ YYYY').utc().format('YYYY-MM-DD HH:mm:ss'),
+                        isNewEntry: false
+                    });
+                }
+            })
+        });
     }
 
     composeNotificationMessage(entry) {

@@ -7,7 +7,6 @@ const url = require('url');
 let cheerio = require('cheerio');
 var async = require('async');
 var winston = require('winston');
-var dedent = require('dedent-js');
 
 class ShopMuseTracker extends Tracker {
     constructor(credentials, usersToTrack) {
@@ -44,13 +43,10 @@ class ShopMuseTracker extends Tracker {
                     q.push(parsed.tasks);
 
                     if (parsed.dataEntries.length) {
-                        //console.log(parsed.dataEntries);
-
                         this.dataEntries = this.dataEntries.concat(parsed.dataEntries);
                     }
 
                     callback();
-                    //resolve();
                 });
 
             }, 5);

@@ -7,7 +7,6 @@ const url = require('url');
 let cheerio = require('cheerio');
 var async = require('async');
 var winston = require('winston');
-var dedent = require('dedent-js');
 
 class ShopBravadousaTracker extends Tracker {
     constructor(credentials, usersToTrack) {
@@ -40,8 +39,6 @@ class ShopBravadousaTracker extends Tracker {
                         reject(error);
                     }
 
-                    //console.log(body);
-
                     console.log(this.constructor.name + ' :: ' + response.request.href + ', Status: ' + response.statusCode);
 
                     var parsed = this.parseResponse(task, body);
@@ -53,7 +50,6 @@ class ShopBravadousaTracker extends Tracker {
                     }
 
                     callback();
-                    //resolve();
                 });
 
             }, 5);

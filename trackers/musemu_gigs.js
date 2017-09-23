@@ -6,8 +6,6 @@ var moment = require('moment');
 var rssParser = require('rss-parser');
 const url = require('url');
 var winston = require('winston');
-var dedent = require('dedent-js');
-var sanitizeHtml = require('sanitize-html');
 
 class MuseGigTracker extends Tracker {
     constructor(credentials, usersToTrack) {
@@ -44,11 +42,6 @@ class MuseGigTracker extends Tracker {
                     }
 
                     rssResult.feed.entries.forEach((entry) => {
-
-                        // console.log(sanitizeHtml(entry.content, {
-                        //     allowedTags: [],
-                        //     allowedAttributes: []
-                        // })); throw Error();
 
                         this.dataEntries.push({
                             entry_id: url.parse(entry.link).pathname.replace('tour-dates,', ''),

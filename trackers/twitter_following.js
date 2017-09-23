@@ -2,11 +2,11 @@
 
 var Tracker = require('./base');
 var TwitterTweeetTracker = require('./twitter_tweets');
-var TwitterClient = require('twit');
 var fs = require('fs');
 var moment = require('moment');
 var winston = require('winston');
-var dedent = require('dedent-js');
+var _ = require('underscore');
+const Promise = require('bluebird');
 
 class TwitterFollowingTracker extends TwitterTweeetTracker
 {
@@ -19,31 +19,21 @@ class TwitterFollowingTracker extends TwitterTweeetTracker
     }
 
     pullData() {
-        var promises = [];
-
-        for (let user of this.usersToTrack) {
-            if (user.following === true) {
-                promises.push(this.client.get('friends/list', { user_id: user.id, count: 200 }, (err, data, response) => {
-                    // console.log(user.name);
-                    //console.log(data[0]); throw Error();
-
-                    for (let value of data.users) {
-                        //console.log(value.text);
-                        this.dataEntries.push({
-                            user_id: user.id,
-                            user_name: user.name,
-                            entry_id: value.id_str,
-                            entry_text: value.name,
-                            entry_screenname: value.screen_name,
-                            entry_user_avatar: value.profile_image_url_https,
-                            isNewEntry: false
-                        });
-                    }
-                }));
-            }
-        }
-
-        return Promise.all(promises);
+        return Promise.map(_.where(this.usersToTrack, {following: true}), (user) => {
+            return this.client.get('friends/list', { user_id: user.id, count: 200 }, (err, data, response) => {
+                for (let value of data.users) {
+                    this.dataEntries.push({
+                        user_id: user.id,
+                        user_name: user.name,
+                        entry_id: value.id_str,
+                        entry_text: value.name,
+                        entry_screenname: value.screen_name,
+                        entry_user_avatar: value.profile_image_url_https,
+                        isNewEntry: false
+                    });
+                }
+            })
+        });
     }
 
     composeNotificationMessage(entry) {

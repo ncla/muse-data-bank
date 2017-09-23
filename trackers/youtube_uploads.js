@@ -1,14 +1,13 @@
 "use strict";
 
 var Tracker = require('./base');
-var TwitterClient = require('twit');
 var fs = require('fs');
 var moment = require('moment');
 var winston = require('winston');
-var dedent = require('dedent-js');
 var request = require('request-promise-native');
 let cheerio = require('cheerio');
-
+var _ = require('underscore');
+const Promise = require('bluebird');
 request = request.defaults({jar: true});
 
 class YoutubeUploadTracker extends Tracker
@@ -28,10 +27,8 @@ class YoutubeUploadTracker extends Tracker
     }
 
     pullData() {
-        var promises = [];
-
-        this.usersToTrack.forEach((channel) => {
-            promises.push(request({
+        return Promise.map(this.usersToTrack, (channel) => {
+            request({
                 url: `https://www.googleapis.com/youtube/v3/channels/?id=${channel.channel_id}&part=contentDetails,snippet&key=${this.credentials.apiKey}`,
                 method: 'GET',
                 json: true
@@ -63,11 +60,8 @@ class YoutubeUploadTracker extends Tracker
                         isNewEntry: false
                     });
                 }, this);
-            }));
+            })
         });
-        // TODO: http://bluebirdjs.com/docs/api/promise.map.html
-        // "A common use of Promise.map is to replace the .push+Promise.all boilerplate"
-        return Promise.all(promises);
     }
 
     composeNotificationMessage(entry) {

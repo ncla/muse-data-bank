@@ -3,11 +3,9 @@
 var Tracker = require('./base');
 var request = require('request');
 var moment = require('moment');
-var rssParser = require('rss-parser');
 const url = require('url');
 var FB = require('fb');
 var winston = require('winston');
-var dedent = require('dedent-js');
 
 class FacebookPostsTracker extends Tracker {
     constructor(credentials, usersToTrack) {

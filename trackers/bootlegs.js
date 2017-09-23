@@ -1,11 +1,9 @@
 "use strict";
 
 var Tracker = require('./base');
-var TwitterClient = require('twit');
 var fs = require('fs');
 var moment = require('moment');
 var winston = require('winston');
-var dedent = require('dedent-js');
 var request = require('request-promise-native');
 let cheerio = require('cheerio');
 

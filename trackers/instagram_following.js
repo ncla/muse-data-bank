@@ -3,12 +3,12 @@
 var Tracker = require('./base');
 var request = require('request');
 var moment = require('moment');
-
 var Client = require('instagram-private-api').V1;
 var device = new Client.Device('museredditbob');
 var storage = new Client.CookieFileStorage('./bot.json');
 var winston = require('winston');
-var dedent = require('dedent-js');
+var _ = require('underscore');
+var Promise = require("bluebird");
 
 class InstagramFollowingTracker extends Tracker {
     constructor(credentials, usersToTrack) {
@@ -31,33 +31,27 @@ class InstagramFollowingTracker extends Tracker {
     pullData() {
         return Client.Session.create(device, storage, this.credentials.userName, this.credentials.password)
             .then((session) => {
-                console.log('session got');
+                console.log(_.where(this.usersToTrack, {following: true}));
 
-                var promises = [];
+                return Promise.map(_.where(this.usersToTrack, {following: true}), (user) => {
+                    return new Client.Feed.AccountFollowing(session, user.id_api).all()
+                        .then((users) => {
+                            // There is some weird issue where some IDs in DB were inserted as float, that's why we are remapping value here
+                            users.forEach((userValue, userIndex) => {
+                                users[userIndex].id = users[userIndex].id.toString();
+                            });
 
-                this.usersToTrack.forEach((user) => {
-                    if (user.following === true) {
-                        promises.push(new Client.Feed.AccountFollowing(session, user.id_api).all()
-                            .then((users) => {
-                                // There is some weird issue where some IDs in DB were inserted as float, that's why we are remapping value here
-                                users.forEach((userValue, userIndex) => {
-                                    users[userIndex].id = users[userIndex].id.toString();
-                                });
+                            return {
+                                user_id: user.id_api,
+                                user_name: user.id,
+                                following: users
+                            };
+                        });
 
-                                return {
-                                    user_id: user.id_api,
-                                    user_name: user.id,
-                                    following: users
-                                };
-                            }));
-                    }
                 });
-
-                return Promise.all(promises);
             }).then((followingResults) => {
                 followingResults.forEach((user) => {
                     user.following.forEach((followingUser) => {
-                        console.log(followingUser);
                         this.dataEntries.push({
                             user_id: user.user_id,
                             user_name: user.user_name,

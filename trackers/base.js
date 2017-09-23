@@ -42,47 +42,14 @@ class Tracker
                 }
             }
 
-            // console.log(this.dbCheckAgainst, entryValue, reMapped);
-
             return knex.select().from(this.dbTable).where(reMapped).then((rows) => {
                     if (rows.length === 0) {
                         this.dataEntries[entryIndex]['isNewEntry'] = true;
                         NotifyManager.add(this.composeNotificationMessage(this.dataEntries[entryIndex]));
-                        //console.log(this.dataEntries[entryIndex]);
-                    } else {
-                        //console.log('nononoonon', this.dataEntries[entryIndex]['entry_id']);
                     }
                 }
             );
         });
-
-        // this.dataEntries.forEach(function (currentValue, index) {
-        //     var reMapped = {};
-        //
-        //     // Re-mapping
-        //     for (var dbColumnName in this.dbCheckAgainst) {
-        //         if (this.dbCheckAgainst.hasOwnProperty(dbColumnName)) {
-        //             reMapped[dbColumnName] = currentValue[this.dbCheckAgainst[dbColumnName]];
-        //         }
-        //     }
-        //
-        //     // console.log(this.dbCheckAgainst, currentValue, reMapped);
-        //
-        //     var promise = knex.select().from(this.dbTable).where(reMapped).then((rows) => {
-        //             if (rows.length === 0) {
-        //                 this.dataEntries[index]['isNewEntry'] = true;
-        //                 NotifyManager.add(this.composeNotificationMessage(this.dataEntries[index]));
-        //                 //console.log(this.dataEntries[index]);
-        //             } else {
-        //                 //console.log('nononoonon', this.dataEntries[index]['entry_id']);
-        //             }
-        //         }
-        //     );
-        //
-        //     promises.push(promise);
-        // }, this);
-        //
-        // return Promise.all(promises);
     }
 
     insertNewEntries(knex) {
@@ -122,9 +89,7 @@ class Tracker
     }
 
     updateDb() {
-        // TODO: Not Promise based
-        this.compareWithDb();
-        this.insertNewEntries();
+        return this.compareWithDb().then(() => {return this.insertNewEntries()});
     }
 
     notify() {

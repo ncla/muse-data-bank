@@ -6,7 +6,6 @@ var moment = require('moment');
 var rssParser = require('rss-parser');
 const url = require('url');
 var winston = require('winston');
-var dedent = require('dedent-js');
 
 class MuseNewsTracker extends Tracker {
     constructor(credentials, usersToTrack) {
