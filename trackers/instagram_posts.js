@@ -43,7 +43,7 @@ class InstagramPostTracker extends Tracker {
                         entry_id: value.id,
                         entry_link_id: value.code,
                         entry_text: (value.caption ? value.caption.text : null),
-                        entry_image: value.images.thumbnail.url,
+                        entry_image: value.images.standard_resolution.url,
                         entry_created_at: moment(value.created_time * 1000).utc().format('YYYY-MM-DD HH:mm:ss'),
                         isNewEntry: false
                     });
