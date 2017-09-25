@@ -47,7 +47,10 @@ class InstagramStoriesTracker extends Tracker {
                             currentUserValue.items.forEach((currentItemValue) => {
                                 var mediaTypeSatisfied = currentItemValue.media_type == 1 || currentItemValue.media_type == 2;
 
-                                if (mediaTypeSatisfied) {
+                                winston.debug(`Instagram User PK Check: ${_.indexOf(userIdsInstagram, currentItemValue.user.pk.toString()) !== -1}`);
+                                winston.debug(`Instagram User PK Value: ${currentItemValue.user.pk} | ${currentItemValue.user.pk.toString()}`);
+
+                                if (mediaTypeSatisfied && _.indexOf(userIdsInstagram, currentItemValue.user.pk.toString()) !== -1) {
                                     this.dataEntries.push({
                                         user_id: currentItemValue.user.pk,
                                         user_name: currentItemValue.user.full_name,
