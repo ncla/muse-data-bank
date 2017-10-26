@@ -14,6 +14,7 @@ var ShopBravadousaTracker = require('./trackers/shop_bravadousa');
 var FacebookPostsTracker = require('./trackers/facebook_posts');
 var MuseBootlegsTracker = require('./trackers/bootlegs');
 var YoutubeUploadTracker = require('./trackers/youtube_uploads');
+var DimeTracker = require('./trackers/dime');
 
 var NotifyManager = require('./notify_manager');
 var http = require('http');
@@ -145,7 +146,8 @@ readOptionsFile.then(function (data) {
         ShopBravado: new ShopBravadousaTracker(),
         FacebookPosts: new FacebookPostsTracker({appId: env.FB_APP_ID, appSecret: env.FB_APP_SECRET}),
         MuseBootlegs: new MuseBootlegsTracker({username: env.MUSEBOOTLEGS_USERNAME, password: env.MUSEBOOTLEGS_PASSWORD}),
-        YoutubeUploads: new YoutubeUploadTracker({apiKey: env.YOUTUBE_DATA_API}, usersToTrack.youtube)
+        YoutubeUploads: new YoutubeUploadTracker({apiKey: env.YOUTUBE_DATA_API}, usersToTrack.youtube),
+        DimeTorrents: new DimeTracker({username: env.DIME_USERNAME, password: env.DIME_PASSWORD})
     };
 
     if (argv.all === true) {
