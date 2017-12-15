@@ -115,6 +115,13 @@
       "posts": true,
       "following": true,
       "stories": true
+    },
+    {
+      "id": "drpeppersjadedheartsclubband",
+      "id_api": "6120750907",
+      "posts": true,
+      "following": true,
+      "stories": true
     }
   ],
   "youtube": [

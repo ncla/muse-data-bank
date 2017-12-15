@@ -127,7 +127,7 @@ readOptionsFile.then(function (data) {
             consumer_secret: env.TWITTER_CONSUMER_SECRET
         }, usersToTrack.twitter),
 
-        InstagramPosts: new InstagramPostTracker(null, usersToTrack.instagram),
+        InstagramPosts: new InstagramPostTracker({userName: env.INSTAGRAM_USERNAME, password: env.INSTAGRAM_PASSWORD}, usersToTrack.instagram, db),
 
         InstagramFollowing: new InstagramFollowingTracker({userName: env.INSTAGRAM_USERNAME, password: env.INSTAGRAM_PASSWORD}, usersToTrack.instagram),
 
