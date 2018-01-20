@@ -78,7 +78,7 @@ class DimeTracker extends Tracker {
         $('table.torrent tr:not(:first-child)').each((i, v) => {
             var entryText = $(v).find('a[href*="torrents-details.php?id="] strong').eq(0).text();
 
-            if (entryText.toLowerCase().indexOf('muse') !== -1) {
+            if (entryText.match(/\bmuse\b/i) !== null) {
                 this.dataEntries.push({
                     entry_id: url.parse($(v).find('a[href*="torrents-details.php?id="]').eq(0).attr('href'), true).query.id,
                     entry_text: entryText,
