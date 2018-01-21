@@ -26,8 +26,6 @@ class ShopMuseTracker extends Tracker {
     pullData() {
         return new Promise((resolve, reject) => {
             var q = async.queue((task, callback) => {
-                console.log('Sending request', task);
-
                 request({
                     url: task.url,
                     method: 'GET',
@@ -36,8 +34,6 @@ class ShopMuseTracker extends Tracker {
                     if (error) {
                         reject(error);
                     }
-
-                    console.log(this.constructor.name + ' :: ' + response.request.href + ', Status: ' + response.statusCode);
 
                     var parsed = this.parseResponse(task, body);
 

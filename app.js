@@ -92,11 +92,10 @@ var readOptionsFile = new Promise(function(resolve, reject) {
     });
 });
 
-db.on('query', function(data) {
-    //console.log(data);
-});
+// db.on('query', function(data) {
+//     console.log(data);
+// });
 
-// TODO: Figure out what the fuck is going on with oauth2 tokens
 globalLog.on('success', function(request, response) {
     winston.debug(`Request => ${request.href} Status => ${response.statusCode}`);
 });
@@ -188,15 +187,20 @@ readOptionsFile.then(function (data) {
             .catch(err => winston.error(err)));
     }
 
-    return Promise.all(trackerPromises).then(() => {
-        winston.profile('all-trackers');
+    return Promise.all(trackerPromises)
+        .then(() => {
+            return db.destroy().then(() => {
+                winston.debug('DB connection is closed');
+            });
+        })
+        .then(() => {
+            winston.profile('all-trackers');
 
-        if (argv.nonotify === true || argv.silent === true) {
-            winston.info('Not sending notifications');
-        } else {
-            NotifyManager.notify();
-        }
-
+            if (argv.nonotify === true || argv.silent === true) {
+                winston.info('Not sending notifications');
+            } else {
+                NotifyManager.notify();
+            }
     });
 
 }).catch((err) => { console.error(err, err.stack); });
