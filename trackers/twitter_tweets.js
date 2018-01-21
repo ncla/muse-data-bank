@@ -32,8 +32,8 @@ class TwitterTweetTracker extends Tracker
 
     pullData() {
         return Promise.map(_.where(this.usersToTrack, {tweets: true}), (user) => {
-            return this.client.get('statuses/user_timeline', { user_id: user.id }, (err, data, response) => {
-                for (let value of data) {
+            return this.client.get('statuses/user_timeline', { user_id: user.id }).then((result) => {
+                for (let value of result.data) {
                     this.dataEntries.push({
                         user_id: value.user.id_str,
                         user_name: value.user.name,
@@ -45,7 +45,7 @@ class TwitterTweetTracker extends Tracker
                         isNewEntry: false
                     });
                 }
-            })
+            });
         });
     }
 

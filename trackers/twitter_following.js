@@ -20,8 +20,8 @@ class TwitterFollowingTracker extends TwitterTweeetTracker
 
     pullData() {
         return Promise.map(_.where(this.usersToTrack, {following: true}), (user) => {
-            return this.client.get('friends/list', { user_id: user.id, count: 200 }, (err, data, response) => {
-                for (let value of data.users) {
+            return this.client.get('friends/list', { user_id: user.id, count: 200 }).then((result) => {
+                for (let value of result.data.users) {
                     this.dataEntries.push({
                         user_id: user.id,
                         user_name: user.name,

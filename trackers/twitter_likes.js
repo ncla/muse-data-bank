@@ -21,8 +21,8 @@ class TwitterLikesTracker extends TwitterTweeetTracker
 
     pullData() {
         return Promise.map(_.where(this.usersToTrack, {likes: true}), (user) => {
-            return this.client.get('favorites/list', { user_id: user.id }, (err, data, response) => {
-                for (let value of data) {
+            return this.client.get('favorites/list', { user_id: user.id }).then((result) => {
+                for (let value of result.data) {
                     this.dataEntries.push({
                         user_id: user.id,
                         user_name: user.name,
@@ -34,7 +34,7 @@ class TwitterLikesTracker extends TwitterTweeetTracker
                         isNewEntry: false
                     });
                 }
-            })
+            });
         });
     }
 
