@@ -36,23 +36,41 @@ class InstagramPostTracker extends Tracker {
             return request(`https://www.instagram.com/${user.id}/?__a=1`, {
                 method: 'GET',
                 headers: {
-                    'Content-type': 'application/json'
+                    'accept': '*/*',
+                    'accept-encoding': 'gzip, deflate, br',
+                    'accept-language': 'en-US,en;q=0.9,lv;q=0.8',
+                    'cache-control': 'no-cache',
+                    'dnt': '1',
+                    'pragma': 'no-cache',
+                    'referer': `https://www.instagram.com/${user.id}/`,
+                    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36',
+                    'x-requested-with': 'XMLHttpRequest',
                 },
                 json: true,
-                timeout: (30 * 1000)
-            }).then((data) => {
-                for (let value of data.user.media.nodes) {
-                    this.dataEntries.push({
-                        user_id: data.user.id,
-                        user_name: data.user.username,
-                        user_avatar: data.user.profile_pic_url,
-                        entry_id: value.id + '_' + data.user.id,
-                        entry_link_id: value.code,
-                        entry_text: (value.caption ? value.caption : null),
-                        entry_image: value.thumbnail_src,
-                        entry_created_at: moment(value.date * 1000).utc().format('YYYY-MM-DD HH:mm:ss'),
-                        isNewEntry: false
-                    });
+                timeout: (30 * 1000),
+                resolveWithFullResponse: true,
+                gzip: true
+            }).then((response) => {
+                var responseBody = response.body;
+
+                try {
+                    for (let value of responseBody.user.media.nodes) {
+                        this.dataEntries.push({
+                            user_id: responseBody.user.id,
+                            user_name: responseBody.user.username,
+                            user_avatar: responseBody.user.profile_pic_url,
+                            entry_id: value.id + '_' + responseBody.user.id,
+                            entry_link_id: value.code,
+                            entry_text: (value.caption ? value.caption : null),
+                            entry_image: value.thumbnail_src,
+                            entry_created_at: moment(value.date * 1000).utc().format('YYYY-MM-DD HH:mm:ss'),
+                            isNewEntry: false
+                        });
+                    }
+                } catch (err) {
+                    winston.error(err);
+                    winston.debug(response.body);
+                    throw Error(`Instagram response body has something exceptional! Code: ${response.statusCode}`);
                 }
             });
         }, {concurrency: 1});
