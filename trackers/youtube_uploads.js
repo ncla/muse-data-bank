@@ -28,7 +28,7 @@ class YoutubeUploadTracker extends Tracker
 
     pullData() {
         return Promise.map(this.usersToTrack, (channel) => {
-            request({
+            return request({
                 url: `https://www.googleapis.com/youtube/v3/channels/?id=${channel.channel_id}&part=contentDetails,snippet&key=${this.credentials.apiKey}`,
                 method: 'GET',
                 json: true
@@ -59,7 +59,7 @@ class YoutubeUploadTracker extends Tracker
                         entry_created_at: moment(item.contentDetails.videoPublishedAt).utc().format('YYYY-MM-DD HH:mm:ss'),
                         isNewEntry: false
                     });
-                }, this);
+                });
             })
         });
     }
