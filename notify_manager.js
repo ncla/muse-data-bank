@@ -54,6 +54,10 @@ class NotifyManager {
                     notification.embed.description = (notification.embed.description.length > 1000 ? notification.embed.description.substring(0, 1000) + '...' : notification.embed.description);
                 }
 
+                if (notification.embed.title) {
+                    notification.embed.title = (notification.embed.title.length > 250 ? notification.embed.title.substring(0, 250) + '...' : notification.embed.title);
+                }
+
                 return promiseRetry(function (retry, number) {
                     winston.debug(`Retryable promise attempt number ${number}`);
 
@@ -75,11 +79,18 @@ class NotifyManager {
                         delay = headers['x-ratelimit-remaining'] == 0 ? diff + 1000 : delay = 0;
                     }).catch((err) => {
                         var headers = err.response.headers;
-                        var diff = (headers['x-ratelimit-reset'] * 1000) - (new Date).getTime();
-                        winston.debug(`Server time: ${headers['date']}, RL remain: ${headers['x-ratelimit-remaining']}, RL reset: ${(headers['x-ratelimit-reset'] * 1000)}, Time now: ${(new Date).getTime()}, Diff: ${diff}, Retry after: ${headers['retry-after']}`);
-                        winston.debug(`Global rate-limit reached, retrying in ${headers['retry-after']}ms`);
-                        delay = 0;
-                        return Promise.delay(headers['retry-after'] || 500).then(retry);
+
+                        if (err.response.statusCode === 429) {
+                            var diff = (headers['x-ratelimit-reset'] * 1000) - (new Date).getTime();
+                            winston.debug(`Server time: ${headers['date']}, RL remain: ${headers['x-ratelimit-remaining']}, RL reset: ${(headers['x-ratelimit-reset'] * 1000)}, Time now: ${(new Date).getTime()}, Diff: ${diff}, Retry after: ${headers['retry-after']}`);
+                            winston.debug(`Global rate-limit reached, retrying in ${headers['retry-after']}ms`);
+                            delay = 0;
+                            return Promise.delay(headers['retry-after'] || 500).then(retry);
+                        } else {
+                            winston.error('Unhandled error response status code');
+                            winston.debug(notification);
+                            return Promise.delay(1000);
+                        }
                     });
 
                 });

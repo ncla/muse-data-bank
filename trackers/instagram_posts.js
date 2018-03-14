@@ -54,23 +54,28 @@ class InstagramPostTracker extends Tracker {
                 var responseBody = response.body;
 
                 try {
-                    for (let value of responseBody.user.media.nodes) {
+                    var username = responseBody.graphql.user.username;
+                    var userAvatar = responseBody.graphql.user.profile_pic_url;
+
+                    for (let value of responseBody.graphql.user.edge_owner_to_timeline_media.edges) {
+                        var valueNode = value.node;
+
                         this.dataEntries.push({
-                            user_id: responseBody.user.id,
-                            user_name: responseBody.user.username,
-                            user_avatar: responseBody.user.profile_pic_url,
-                            entry_id: value.id + '_' + responseBody.user.id,
-                            entry_link_id: value.code,
-                            entry_text: (value.caption ? value.caption : null),
-                            entry_image: value.thumbnail_src,
-                            entry_created_at: moment(value.date * 1000).utc().format('YYYY-MM-DD HH:mm:ss'),
+                            user_id: valueNode.owner.id,
+                            user_name: username,
+                            user_avatar: userAvatar,
+                            entry_id: valueNode.id + '_' + valueNode.owner.id,
+                            entry_link_id: valueNode.shortcode,
+                            entry_text: (valueNode.edge_media_to_caption.edges.length > 0 ? valueNode.edge_media_to_caption.edges[0].node.text : null),
+                            entry_image: valueNode.display_url,
+                            entry_created_at: moment(valueNode.taken_at_timestamp * 1000).utc().format('YYYY-MM-DD HH:mm:ss'),
                             isNewEntry: false
                         });
                     }
                 } catch (err) {
                     winston.error(err);
                     winston.debug(response.body);
-                    throw Error(`Instagram response body has something exceptional! Code: ${response.statusCode}`);
+                    throw Error(`Instagram response body has something bad! HTTP Status Code: ${response.statusCode}`);
                 }
             });
         }, {concurrency: 1});
@@ -82,7 +87,6 @@ class InstagramPostTracker extends Tracker {
             embed: {
                 "title": entry.entry_text,
                 "type": "rich",
-                "description": entry.entry_description,
                 "url": `https://www.instagram.com/p/${entry.entry_link_id}/`,
                 "timestamp": entry.entry_created_at,
                 "color": "15844367",
