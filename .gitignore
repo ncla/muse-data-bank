@@ -5,3 +5,6 @@ bot.json
 logs/
 .idea/
 dime.json
+npm-debug.log
+vendor/*
+yarn-error.log

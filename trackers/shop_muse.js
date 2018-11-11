@@ -53,7 +53,7 @@ class ShopMuseTracker extends Tracker {
                 resolve();
             };
 
-            q.push([{type: 'home', url: 'http://store.muse.mu/eu/'}]);
+            q.push([{type: 'home', url: 'https://store.muse.mu/eu/'}]);
 
         });
     }

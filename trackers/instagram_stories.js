@@ -8,6 +8,8 @@ var device = new Client.Device('museredditbob');
 var storage = new Client.CookieFileStorage('./bot.json');
 var winston = require('winston');
 var _ = require('underscore');
+const util = require('util');
+const exec = util.promisify(require('child_process').exec);
 
 class InstagramStoriesTracker extends Tracker {
     constructor(credentials, usersToTrack) {
@@ -28,55 +30,34 @@ class InstagramStoriesTracker extends Tracker {
     }
 
     pullData() {
-        var userIdsInstagram = _.map(_.where(this.usersToTrack, {stories: true}), (user) => {
+        var igUserIdsApi = _.map(_.where(this.usersToTrack, {stories: true}), (user) => {
             return user.id_api;
         });
 
-        return Client.Session.create(device, storage, this.credentials.userName, this.credentials.password)
-            .then((session) => {
-                return new Client.Request(session)
-                    .setMethod('GET')
-                    .setResource('storyTray')
-                    .setData({
-                        user_ids: userIdsInstagram
-                    })
-                    .send()
-                    .then((data) => {
+        if (igUserIdsApi.length === 0) {
+            return Promise.reject('No users');
+        }
 
-                        data.tray.forEach((currentUserValue, currentUserIndex) => {
-                            currentUserValue.items.forEach((currentItemValue) => {
-                                var mediaTypeSatisfied = currentItemValue.media_type == 1 || currentItemValue.media_type == 2;
+        winston.debug(`${this.constructor.name} :: Calling shell to run PHP script`);
 
-                                winston.debug(`Instagram User PK Check: ${_.indexOf(userIdsInstagram, currentItemValue.user.pk.toString()) !== -1}`);
-                                winston.debug(`Instagram User PK Value: ${currentItemValue.user.pk} | ${currentItemValue.user.pk.toString()}`);
+        return exec(`php instagram/Stories.php ${this.credentials.userName} ${this.credentials.password} ${igUserIdsApi.join(',')}`).then(std => {
+            winston.debug(`${this.constructor.name} :: Shell response length - ${std.stdout.length}`);
+            winston.debug(`${this.constructor.name} :: Shell response error - ${std.stderr}`);
 
-                                if (mediaTypeSatisfied && _.indexOf(userIdsInstagram, currentItemValue.user.pk.toString()) !== -1) {
-                                    this.dataEntries.push({
-                                        user_id: currentItemValue.user.pk,
-                                        user_name: currentItemValue.user.full_name,
-                                        entry_id: currentItemValue.id,
-                                        entry_text: currentItemValue.media_type == 1 ? currentItemValue.image_versions2.candidates[0].url : currentItemValue.video_versions[0].url,
-                                        entry_created_at: moment(currentItemValue.taken_at * 1000).utc().format('YYYY-MM-DD HH:mm:ss'),
-                                        media_type: currentItemValue.media_type == 1 ? 'image' : 'video',
-                                        image_url: currentItemValue.image_versions2.candidates[0].url
-                                    })
-                                }
-                            });
-                        });
-                    });
-            })
+            this.dataEntries = JSON.parse(std.stdout);
+        });
     }
 
     composeNotificationMessage(entry) {
         return {
-            title: `**${entry.user_name}** posted a new ${entry.media_type} item on Instagram Story`,
+            title: `**${entry.user_name}** posted a new item on Instagram Story`,
             embed: {
                 "type": "rich",
-                "description": `${entry.entry_text}`,
+                "description": `${entry.entry_image}`,
                 "timestamp": entry.entry_created_at,
                 "color": "15844367",
                 "image": {
-                    "url": entry.image_url
+                    "url": entry.entry_image
                 }
             }
         };

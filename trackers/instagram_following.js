@@ -9,6 +9,8 @@ var storage = new Client.CookieFileStorage('./bot.json');
 var winston = require('winston');
 var _ = require('underscore');
 var Promise = require("bluebird");
+const util = require('util');
+const exec = util.promisify(require('child_process').exec);
 
 class InstagramFollowingTracker extends Tracker {
     constructor(credentials, usersToTrack) {
@@ -29,40 +31,32 @@ class InstagramFollowingTracker extends Tracker {
     }
 
     pullData() {
-        return Client.Session.create(device, storage, this.credentials.userName, this.credentials.password)
-            .then((session) => {
-                console.log(_.where(this.usersToTrack, {following: true}));
+        var igUserIdsApi = _.map(_.where(this.usersToTrack, {following: true}), (user) => {
+            return user.id_api;
+        });
 
-                return Promise.map(_.where(this.usersToTrack, {following: true}), (user) => {
-                    return new Client.Feed.AccountFollowing(session, user.id_api).all()
-                        .then((users) => {
-                            // There is some weird issue where some IDs in DB were inserted as float, that's why we are remapping value here
-                            users.forEach((userValue, userIndex) => {
-                                users[userIndex].id = users[userIndex].id.toString();
-                            });
+        var usersIndexedByApiId = _.indexBy(this.usersToTrack, 'id_api');
 
-                            return {
-                                user_id: user.id_api,
-                                user_name: user.id,
-                                following: users
-                            };
-                        });
+        if (igUserIdsApi.length === 0) {
+            return Promise.reject('No users');
+        }
 
-                });
-            }).then((followingResults) => {
-                followingResults.forEach((user) => {
-                    user.following.forEach((followingUser) => {
-                        this.dataEntries.push({
-                            user_id: user.user_id,
-                            user_name: user.user_name,
-                            entry_id: followingUser.id,
-                            entry_username: followingUser._params.username,
-                            entry_user_avatar: followingUser._params.picture,
-                            entry_user_fullname: followingUser._params.fullName,
-                        })
-                    });
-                });
+        winston.debug(`${this.constructor.name} :: Calling shell to run PHP script`);
+
+        return exec(`php instagram/Following.php ${this.credentials.userName} ${this.credentials.password} ${igUserIdsApi.join(',')}`).then(std => {
+            winston.debug(`${this.constructor.name} :: Shell response length - ${std.stdout.length}`);
+            winston.debug(`${this.constructor.name} :: Shell response error - ${std.stderr}`);
+
+
+            var response = JSON.parse(std.stdout);
+
+            // Instagram API doesn't return user_name of the person that is following these users
+            response.forEach((following, followingIndex) => {
+                 response[followingIndex]['user_name'] = usersIndexedByApiId[following['user_id']]['id']
             });
+
+            this.dataEntries = response;
+        });
     }
 
     composeNotificationMessage(entry) {

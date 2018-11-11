@@ -1,11 +1,12 @@
 "use strict";
 
 var Tracker = require('./base');
-var request = require('request');
+var request = require('request-promise-native');
 var moment = require('moment');
 var rssParser = require('rss-parser');
 const url = require('url');
 var winston = require('winston');
+let cheerio = require('cheerio');
 
 class MuseNewsTracker extends Tracker {
     constructor(credentials, usersToTrack) {
@@ -15,52 +16,36 @@ class MuseNewsTracker extends Tracker {
 
         this.dbCheckAgainst = {
             entry_id: 'entry_id',
-            entry_created_at: 'entry_created_at'
+            // entry_created_at: 'entry_created_at'
         };
 
-        this.columnsToInsert = ['entry_id', 'entry_text', 'entry_created_at'];
+        this.columnsToInsert = ['entry_id', 'entry_text'];
 
         return this;
     }
 
     pullData() {
+        // TODO in future: Fetch each news page for more rich embed
+        return request({
+            url: `http://www.muse.mu/news`,
+            method: 'GET',
+            timeout: (30 * 1000)
+        }).then(r => {
+            winston.debug(`${this.constructor.name} :: Response length ${r.length}`);
 
-        return new Promise((resolve, reject) => {
-            request({
-                'url': 'http://muse.mu/rss/news',
-                'method': 'GET',
-                timeout: (30 * 1000)
-            }, (error, response, body) => {
-                if (error) {
-                    reject(error);
-                }
+            let $ = cheerio.load(r);
+            let items = $('#block-system-main .view-content .item-list ul li')
 
-                console.log(this.constructor.name + ' :: ' + response.request.href + ', Status: ' + response.statusCode);
+            items.each((i, v) => {
+                var link = $(v).find('.thumbnailWrapper').attr('href');
 
-                rssParser.parseString(body, (rssErr, rssResult) => {
-                    if (rssErr) {
-                        reject(rssErr);
-                    }
-
-                    rssResult.feed.entries.forEach((entry) => {
-
-                        this.dataEntries.push({
-                            entry_id: url.parse(entry.link).pathname.replace('news,', ''),
-                            entry_text: entry.title,
-                            entry_description: entry.content,
-                            entry_link: entry.link,
-                            entry_created_at: moment(entry.pubDate, 'ddd, DD MMM YYYY HH:mm:ss').format('YYYY-MM-DD HH:mm:ss')
-                        });
-
-                    });
-
-                    resolve(rssResult);
+                this.dataEntries.push({
+                    entry_id: url.parse(link).path.replace('/news/', ''),
+                    entry_text: `${$(v).find('.blogTitle').text().trim()}`,
+                    entry_link: url.resolve('http://muse.mu', link),
                 });
-
-                resolve();
             });
         });
-
     }
 
     composeNotificationMessage(entry) {
@@ -68,10 +53,8 @@ class MuseNewsTracker extends Tracker {
             title: `New news post added on muse.mu`,
             embed: {
                 "title": entry.entry_text,
-                "description": entry.entry_description,
                 "type": "rich",
                 "url": `${entry.entry_link}`,
-                "timestamp": entry.entry_created_at,
                 "color": "0"
             }
         };

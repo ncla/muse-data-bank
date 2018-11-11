@@ -1,11 +1,12 @@
 "use strict";
 
 var Tracker = require('./base');
-var request = require('request');
+var request = require('request-promise-native');
 var moment = require('moment');
 var rssParser = require('rss-parser');
 const url = require('url');
 var winston = require('winston');
+let cheerio = require('cheerio');
 
 class MuseGigTracker extends Tracker {
     constructor(credentials, usersToTrack) {
@@ -24,43 +25,44 @@ class MuseGigTracker extends Tracker {
     }
 
     pullData() {
+        const loop = async () => {
+            let result = null;
+            let page = 0;
 
-        return new Promise((resolve, reject) => {
-            request({
-                'url': 'http://muse.mu/rss/gigs',
-                'method': 'GET',
-                timeout: (30 * 1000)
-            }, (error, response, body) => {
-                if (error) {
-                    reject(error);
-                }
+            while (result !== true) {
+                await request({
+                    url: `http://www.muse.mu/tour?field_event_city_value=&field_event_state_value=&field_eventdate_value_1%5Bvalue%5D=&page=${page}`,
+                    method: 'GET',
+                    timeout: (30 * 1000)
+                }).then(r => {
+                    winston.debug(`${this.constructor.name} :: Response length ${r.length}`);
 
-                console.log(this.constructor.name + ' :: ' + response.request.href + ', Status: ' + response.statusCode);
+                    let $ = cheerio.load(r);
+                    let items = $('.block-TOUR-DATES .view-content .item-list ul li');
 
-                rssParser.parseString(body, (rssErr, rssResult) => {
-                    if (rssErr) {
-                        reject(rssErr);
-                    }
+                    winston.debug(`${this.constructor.name} :: Items count ${items.length}`);
 
-                    rssResult.feed.entries.forEach((entry) => {
+                    items.each((i, v) => {
+                        var link = $(v).find('.tourMoreInfoLink').attr('href');
 
                         this.dataEntries.push({
-                            entry_id: url.parse(entry.link).pathname.replace('tour-dates,', ''),
-                            entry_text: entry.title,
-                            entry_description: entry.description,
-                            entry_link: entry.link,
-                            entry_created_at: moment(entry.pubDate, 'ddd, DD MMM YYYY HH:mm:ss').format('YYYY-MM-DD HH:mm:ss')
+                            entry_id: url.parse(link).pathname.replace('/tour-date/', ''),
+                            entry_text: `${$(v).find('.tourtitle').text().trim()}, ${$(v).find('.tourCity').text().trim()}`,
+                            entry_link: url.resolve('https://muse.mu', link),
+                            entry_created_at: moment($(v).find('.date-display-single').eq(0).attr('content')).format('YYYY-MM-DD HH:mm:ss'),
                         });
-
                     });
 
-                    resolve(rssResult);
+                    if (items.length === 0) {
+                        result = true;
+                    }
                 });
 
-                resolve();
-            });
-        });
+                page++;
+            }
+        };
 
+        return loop();
     }
 
     composeNotificationMessage(entry) {

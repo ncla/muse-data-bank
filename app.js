@@ -10,7 +10,6 @@ var RedditPostTracker = require('./trackers/reddit_posts');
 var MuseGigTracker = require('./trackers/musemu_gigs');
 var MuseNewsTracker = require('./trackers/musemu_news');
 var ShopMuseTracker = require('./trackers/shop_muse');
-var ShopBravadousaTracker = require('./trackers/shop_bravadousa');
 var FacebookPostsTracker = require('./trackers/facebook_posts');
 var MuseBootlegsTracker = require('./trackers/bootlegs');
 var YoutubeUploadTracker = require('./trackers/youtube_uploads');
@@ -142,7 +141,6 @@ readOptionsFile.then(function (data) {
         MuseGigs: new MuseGigTracker(),
         MuseNews: new MuseNewsTracker(),
         ShopMuse: new ShopMuseTracker(),
-        ShopBravado: new ShopBravadousaTracker(),
         FacebookPosts: new FacebookPostsTracker({appId: env.FB_APP_ID, appSecret: env.FB_APP_SECRET}),
         MuseBootlegs: new MuseBootlegsTracker({username: env.MUSEBOOTLEGS_USERNAME, password: env.MUSEBOOTLEGS_PASSWORD}),
         YoutubeUploads: new YoutubeUploadTracker({apiKey: env.YOUTUBE_DATA_API}, usersToTrack.youtube),

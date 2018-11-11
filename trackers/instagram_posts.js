@@ -10,6 +10,8 @@ var device = new Client.Device('museredditbob');
 var storage = new Client.CookieFileStorage('./bot.json');
 var _ = require('underscore');
 var argv = require('yargs').argv;
+const util = require('util');
+const exec = util.promisify(require('child_process').exec);
 
 class InstagramPostTracker extends Tracker {
     constructor(credentials, usersToTrack, db) {
@@ -32,53 +34,22 @@ class InstagramPostTracker extends Tracker {
     }
 
     pullData() {
-        return Promise.map(_.where(this.usersToTrack, {posts: true}), (user) => {
-            return request(`https://www.instagram.com/${user.id}/?__a=1`, {
-                method: 'GET',
-                headers: {
-                    'accept': '*/*',
-                    'accept-encoding': 'gzip, deflate, br',
-                    'accept-language': 'en-US,en;q=0.9,lv;q=0.8',
-                    'cache-control': 'no-cache',
-                    'dnt': '1',
-                    'pragma': 'no-cache',
-                    'referer': `https://www.instagram.com/${user.id}/`,
-                    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36',
-                    'x-requested-with': 'XMLHttpRequest',
-                },
-                json: true,
-                timeout: (30 * 1000),
-                resolveWithFullResponse: true,
-                gzip: true
-            }).then((response) => {
-                var responseBody = response.body;
+        var igUserIdsApi = _.map(_.where(this.usersToTrack, {posts: true}), (user) => {
+            return user.id_api;
+        });
 
-                try {
-                    var username = responseBody.graphql.user.username;
-                    var userAvatar = responseBody.graphql.user.profile_pic_url;
+        if (igUserIdsApi.length === 0) {
+            return Promise.reject('No users');
+        }
 
-                    for (let value of responseBody.graphql.user.edge_owner_to_timeline_media.edges) {
-                        var valueNode = value.node;
+        winston.debug(`${this.constructor.name} :: Calling shell to run PHP script`);
 
-                        this.dataEntries.push({
-                            user_id: valueNode.owner.id,
-                            user_name: username,
-                            user_avatar: userAvatar,
-                            entry_id: valueNode.id + '_' + valueNode.owner.id,
-                            entry_link_id: valueNode.shortcode,
-                            entry_text: (valueNode.edge_media_to_caption.edges.length > 0 ? valueNode.edge_media_to_caption.edges[0].node.text : null),
-                            entry_image: valueNode.display_url,
-                            entry_created_at: moment(valueNode.taken_at_timestamp * 1000).utc().format('YYYY-MM-DD HH:mm:ss'),
-                            isNewEntry: false
-                        });
-                    }
-                } catch (err) {
-                    winston.error(err);
-                    winston.debug(response.body);
-                    throw Error(`Instagram response body has something bad! HTTP Status Code: ${response.statusCode}`);
-                }
-            });
-        }, {concurrency: 1});
+        return exec(`php instagram/Posts.php ${this.credentials.userName} ${this.credentials.password} ${igUserIdsApi.join(',')}`).then(std => {
+            winston.debug(`${this.constructor.name} :: Shell response length - ${std.stdout.length}`);
+            winston.debug(`${this.constructor.name} :: Shell response error - ${std.stderr}`);
+
+            this.dataEntries = JSON.parse(std.stdout);
+        });
     }
 
     composeNotificationMessage(entry) {

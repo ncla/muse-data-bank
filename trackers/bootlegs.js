@@ -29,7 +29,7 @@ class MuseBootlegsTracker extends Tracker
         };
 
         return request({
-            url: 'http://www.musebootlegs.com/ajax/login.php',
+            url: 'https://www.musebootlegs.com/ajax/login.php',
             method: 'POST',
             formData: {
                 action: 'login',
@@ -43,7 +43,7 @@ class MuseBootlegsTracker extends Tracker
             console.log(this.constructor.name + ' :: ' + data.response.request.href + ', Status: ' + data.response.statusCode);
 
             return request({
-                url: 'http://www.musebootlegs.com/?p=torrents&pid=10',
+                url: 'https://www.musebootlegs.com/?p=torrents&pid=10',
                 method: 'POST',
                 formData: {
                     'sortOptions[sortBy]': 'added',

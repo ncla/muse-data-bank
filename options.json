@@ -92,35 +92,35 @@
       "id": "nowherethomas",
       "id_api": "5828783",
       "posts": true,
-      "following": true,
+      "following": false,
       "stories": true
     },
     {
       "id": "domanderson666",
       "id_api": "53138300",
       "posts": true,
-      "following": true,
+      "following": false,
       "stories": true
     },
     {
       "id": "marc_carolan",
       "id_api": "8407245",
       "posts": true,
-      "following": true,
+      "following": false,
       "stories": true
     },
     {
       "id": "richcostey",
       "id_api": "629553006",
       "posts": true,
-      "following": true,
+      "following": false,
       "stories": true
     },
     {
       "id": "drpeppersjadedheartsclubband",
       "id_api": "6120750907",
       "posts": true,
-      "following": true,
+      "following": false,
       "stories": true
     }
   ],
