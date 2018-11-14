@@ -4,8 +4,6 @@ var Tracker = require('./base');
 var request = require('request');
 var moment = require('moment');
 var Client = require('instagram-private-api').V1;
-var device = new Client.Device('museredditbob');
-var storage = new Client.CookieFileStorage('./bot.json');
 var winston = require('winston');
 var _ = require('underscore');
 var Promise = require("bluebird");
@@ -48,7 +46,12 @@ class InstagramFollowingTracker extends Tracker {
             winston.debug(`${this.constructor.name} :: Shell response error - ${std.stderr}`);
 
 
-            var response = JSON.parse(std.stdout);
+            try {
+                this.dataEntries = JSON.parse(std.stdout);
+            } catch(e) {
+                winston.debug(`${this.constructor.name} \n ${std.stdout.length}`);
+                return Promise.reject(e);
+            }
 
             // Instagram API doesn't return user_name of the person that is following these users
             response.forEach((following, followingIndex) => {

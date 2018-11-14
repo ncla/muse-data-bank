@@ -6,8 +6,6 @@ var moment = require('moment');
 var winston = require('winston');
 const Promise = require('bluebird');
 var Client = require('instagram-private-api').V1;
-var device = new Client.Device('museredditbob');
-var storage = new Client.CookieFileStorage('./bot.json');
 var _ = require('underscore');
 var argv = require('yargs').argv;
 const util = require('util');
@@ -48,7 +46,13 @@ class InstagramPostTracker extends Tracker {
             winston.debug(`${this.constructor.name} :: Shell response length - ${std.stdout.length}`);
             winston.debug(`${this.constructor.name} :: Shell response error - ${std.stderr}`);
 
-            this.dataEntries = JSON.parse(std.stdout);
+            try {
+                this.dataEntries = JSON.parse(std.stdout);
+            } catch(e) {
+                winston.debug(`${this.constructor.name} \n ${std.stdout.length}`);
+                return Promise.reject(e);
+            }
+
         });
     }
 
