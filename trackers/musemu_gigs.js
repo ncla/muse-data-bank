@@ -31,7 +31,7 @@ class MuseGigTracker extends Tracker {
 
             while (result !== true) {
                 await request({
-                    url: `http://www.muse.mu/tour?field_event_city_value=&field_event_state_value=&field_eventdate_value_1%5Bvalue%5D=&page=${page}`,
+                    url: `http://www.muse.mu/tour?page=${page}`,
                     method: 'GET',
                     timeout: (30 * 1000)
                 }).then(r => {
