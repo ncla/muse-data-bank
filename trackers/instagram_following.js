@@ -41,7 +41,12 @@ class InstagramFollowingTracker extends Tracker {
 
         winston.debug(`${this.constructor.name} :: Calling shell to run PHP script`);
 
-        return exec(`php instagram/Following.php ${this.credentials.userName} ${this.credentials.password} ${igUserIdsApi.join(',')}`).then(std => {
+        return exec(
+            `php instagram/Following.php ${this.credentials.userName} ${this.credentials.password} ${igUserIdsApi.join(',')}`,
+            {
+                maxBuffer: 1024 * 500
+            }
+        ).then(std => {
             winston.debug(`${this.constructor.name} :: Shell response length - ${std.stdout.length}`);
             winston.debug(`${this.constructor.name} :: Shell response error - ${std.stderr}`);
 
