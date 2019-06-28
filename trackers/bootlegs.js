@@ -40,7 +40,7 @@ class MuseBootlegsTracker extends Tracker
             timeout: (30 * 1000),
             transform: rTransform
         }).then((data) => {
-            console.log(this.constructor.name + ' :: ' + data.response.request.href + ', Status: ' + data.response.statusCode);
+            winston.debug(this.constructor.name + ' :: ' + data.response.request.href + ', Status: ' + data.response.statusCode);
 
             return request({
                 url: 'https://www.musebootlegs.com/?p=torrents&pid=10',
@@ -53,6 +53,12 @@ class MuseBootlegsTracker extends Tracker
             });
         }).then((r) => {
             let $ = cheerio.load(r);
+
+            var errorBox = $('#show_error');
+
+            if (errorBox.length) {
+                winston.error($(errorBox).text().trim());
+            }
 
             $('#content > .torrent-box[id^="torrent_"]').each((i, v) => {
                 this.dataEntries.push({
