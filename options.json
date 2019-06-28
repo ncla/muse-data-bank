@@ -48,8 +48,8 @@
       "id": 54327714,
       "name": "hapevv",
       "tweets": true,
-      "likes": true,
-      "following": true
+      "likes": false,
+      "following": false
     },
     {
       "id": 635314013,
@@ -122,6 +122,34 @@
       "posts": true,
       "following": false,
       "stories": true
+    },
+    {
+      "id": "captmorganized71",
+      "id_api": "4117511670",
+      "posts": true,
+      "following": false,
+      "stories": true
+    },
+    {
+      "id": "musedancers",
+      "id_api": "12085868722",
+      "posts": true,
+      "following": false,
+      "stories": true
+    },
+    {
+      "id": "the__powerglove",
+      "id_api": "5573589870",
+      "posts": true,
+      "following": false,
+      "stories": true
+    },
+    {
+      "id": "murph_the_robot",
+      "id_api": "11301167277",
+      "posts": true,
+      "following": false,
+      "stories": false
     }
   ],
   "youtube": [

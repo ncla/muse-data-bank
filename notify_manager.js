@@ -50,26 +50,31 @@ class NotifyManager {
             winston.debug(`Applying ${delay}ms delay`);
 
             return Promise.delay(delay).then(() => {
-                if (notification.embed.description) {
+                if (notification.embed && notification.embed.description) {
                     notification.embed.description = (notification.embed.description.length > 1000 ? notification.embed.description.substring(0, 1000) + '...' : notification.embed.description);
                 }
 
-                if (notification.embed.title) {
+                if (notification.embed && notification.embed.title) {
                     notification.embed.title = (notification.embed.title.length > 250 ? notification.embed.title.substring(0, 250) + '...' : notification.embed.title);
                 }
 
                 return promiseRetry(function (retry, number) {
                     winston.debug(`Retryable promise attempt number ${number}`);
 
+                    var body = {
+                        content: notification.title,
+                    };
+
+                    if (notification.hasOwnProperty('embed')) {
+                        body['embeds'] = [notification.embed];
+                    }
+
                     return request({
                             url: `https://discordapp.com/api/webhooks/${env.DISCORD_WEBHOOK_ID}/${env.DISCORD_WEBHOOK_TOKEN}`,
                             method: 'POST',
                             json: true,
                             resolveWithFullResponse: true,
-                            body: {
-                                content: notification.title,
-                                embeds: [notification.embed]
-                            }
+                            body: body
                         }
                     ).then((resp) => {
                         var headers = resp.headers;

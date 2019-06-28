@@ -57,23 +57,38 @@ class InstagramPostTracker extends Tracker {
     }
 
     composeNotificationMessage(entry) {
-        return {
-            title: `**${entry.user_name}** posted on Instagram`,
-            embed: {
-                "title": entry.entry_text,
-                "type": "rich",
-                "url": `https://www.instagram.com/p/${entry.entry_link_id}/`,
-                "timestamp": entry.entry_created_at,
-                "color": "15844367",
-                "author": {
-                    "name": entry.user_name,
-                    "icon_url": entry.user_avatar
-                },
-                "image": {
-                    "url": entry.entry_image
-                }
+        var embedProperty = {
+            "title": entry.entry_text,
+            "type": "rich",
+            "url": `https://www.instagram.com/p/${entry.entry_link_id}/`,
+            "timestamp": entry.entry_created_at,
+            "color": "15844367",
+            "author": {
+                "name": entry.user_name,
+                "icon_url": entry.user_avatar
             }
         };
+
+        if (entry.hasOwnProperty('entry_image')) {
+            embedProperty['image'] = {
+                "url": entry.entry_image
+            };
+
+            return {
+                title: `**${entry.user_name}** posted on Instagram`,
+                embed: embedProperty
+            };
+        }
+
+        // Video support in embeds does not exist as of writing
+        // https://support.discordapp.com/hc/en-us/community/posts/360037387352-Videos-in-Rich-Embeds
+        // "For the webhook embed objects, you can set every field except ..video."
+        // https://discordapp.com/developers/docs/resources/webhook#execute-webhook
+        if (entry.hasOwnProperty('entry_video')) {
+            return {
+                title: `**${entry.user_name}** posted on Instagram <${embedProperty.url}>\n\nDirect video link: ${entry.entry_video}`
+            };
+        }
     }
 }
 

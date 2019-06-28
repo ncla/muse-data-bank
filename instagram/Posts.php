@@ -34,25 +34,48 @@ foreach($ids as $userId) {
         $media_type = $item->getMediaType();
         $mediaUrl = null;
 
-        // TODO: Handle videos and multiple items in Discord Webhook Embeds
-        if ($media_type === \InstagramAPI\Response\Model\Item::ALBUM) {
-            $mediaUrl = $item->getCarouselMedia()[0]->getImageVersions2()->getCandidates()[0]->getUrl();
-        } elseif ($media_type == \InstagramAPI\Response\Model\Item::PHOTO) {
-            $mediaUrl = $item->getImageVersions2()->getCandidates()[0]->getUrl();
-        } elseif ($media_type == \InstagramAPI\Response\Model\Item::VIDEO) {
-            $mediaUrl = $item->getImageVersions2()->getCandidates()[0]->getUrl();
-        }
-
-        $responses[] = [
+        $dataCompiled = [
             'user_id' => $userId,
             'user_name' => $item->getUser()->getUsername(),
             'user_avatar' => $item->getUser()->getProfilePicUrl(),
             'entry_id' => $item->getId(),
             'entry_link_id' => $item->getCode(),
             'entry_text' => ($item->getCaption() === null) ? null : $item->getCaption()->getText(),
-            'entry_image' => $mediaUrl,
             'entry_created_at' => Carbon::createFromTimestamp($item->getTakenAt())->toDateTimeString()
         ];
+
+        if ($media_type === \InstagramAPI\Response\Model\Item::CAROUSEL) {
+            $carouselItems = $item->getCarouselMedia();
+
+            foreach ($carouselItems as $carouselItemIndex => $carouselItem) {
+                $carouselDataCompiled = $dataCompiled;
+                $carouselDataCompiled['entry_id'] = $carouselDataCompiled['entry_id'] . '_' . $carouselItemIndex;
+
+                if ($carouselItem->getMediaType() === \InstagramAPI\Response\Model\Item::PHOTO) {
+                    $carouselDataCompiled['entry_image'] = $carouselItem->getImageVersions2()->getCandidates()[0]->getUrl();
+                }
+
+                if ($carouselItem->getMediaType() === \InstagramAPI\Response\Model\Item::VIDEO) {
+                    $carouselDataCompiled['entry_video'] = $carouselItem->getVideoVersions()[0]->getUrl();
+                }
+
+                $responses[] = $carouselDataCompiled;
+            }
+
+            $mediaUrl = $item->getCarouselMedia()[0]->getImageVersions2()->getCandidates()[0]->getUrl();
+        } else {
+            if ($media_type == \InstagramAPI\Response\Model\Item::PHOTO) {
+                $mediaUrl = $item->getImageVersions2()->getCandidates()[0]->getUrl();
+                $dataCompiled['entry_image'] = $mediaUrl;
+            }
+
+            if ($media_type == \InstagramAPI\Response\Model\Item::VIDEO) {
+                $mediaUrl = $item->getVideoVersions()[0]->getUrl();
+                $dataCompiled['entry_video'] = $mediaUrl;
+            }
+
+            $responses[] = $dataCompiled;
+        }
     }
 
     sleep(1);

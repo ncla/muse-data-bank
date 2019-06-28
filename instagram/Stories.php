@@ -40,26 +40,27 @@ foreach($ids as $userId) {
         $media_type = $item->getMediaType();
         $mediaUrl = null;
 
-        // TODO: Handle videos and multiple items in Discord Webhook Embeds
-        // Logic copypasted from Posts
-        if ($media_type === \InstagramAPI\Response\Model\Item::ALBUM) {
-            $mediaUrl = $item->getCarouselMedia()[0]->getImageVersions2()->getCandidates()[0]->getUrl();
-        } elseif ($media_type == \InstagramAPI\Response\Model\Item::PHOTO) {
-            $mediaUrl = $item->getImageVersions2()->getCandidates()[0]->getUrl();
-        } elseif ($media_type == \InstagramAPI\Response\Model\Item::VIDEO) {
-            $mediaUrl = $item->getImageVersions2()->getCandidates()[0]->getUrl();
-        }
-
-        $responses[] = [
+        $dataCompiled = [
             'user_id' => $userId,
             'user_name' => $item->getUser()->getUsername(),
             'user_avatar' => $item->getUser()->getProfilePicUrl(),
             'entry_id' => $item->getId(),
             'entry_link_id' => $item->getCode(),
             'entry_text' => $mediaUrl,
-            'entry_image' => $mediaUrl,
             'entry_created_at' => Carbon::createFromTimestamp($item->getTakenAt())->toDateTimeString()
         ];
+
+        // Logic copypasted from Posts, Stories can't possibly have Carousel, right?
+        if ($media_type == \InstagramAPI\Response\Model\Item::PHOTO) {
+            $dataCompiled['entry_image'] = $item->getImageVersions2()->getCandidates()[0]->getUrl();
+        } elseif ($media_type == \InstagramAPI\Response\Model\Item::VIDEO) {
+            $dataCompiled['entry_video'] = $item->getVideoVersions()[0]->getUrl();
+        } else {
+            continue;
+        }
+
+        $responses[] = $dataCompiled;
+
     }
 
     sleep(1);

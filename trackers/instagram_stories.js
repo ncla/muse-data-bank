@@ -52,18 +52,29 @@ class InstagramStoriesTracker extends Tracker {
     }
 
     composeNotificationMessage(entry) {
-        return {
-            title: `**${entry.user_name}** posted a new item on Instagram Story`,
-            embed: {
-                "type": "rich",
-                "description": `${entry.entry_image}`,
-                "timestamp": entry.entry_created_at,
-                "color": "15844367",
-                "image": {
-                    "url": entry.entry_image
-                }
-            }
+        var embedProperty = {
+            "type": "rich",
+            "description": `${entry.entry_image}`,
+            "timestamp": entry.entry_created_at,
+            "color": "15844367",
         };
+
+        if (entry.hasOwnProperty('entry_image')) {
+            embedProperty['image'] = {
+                "url": entry.entry_image
+            };
+
+            return {
+                title: `**${entry.user_name}** posted a new item on Instagram Story`,
+                embed: embedProperty
+            };
+        }
+
+        if (entry.hasOwnProperty('entry_video')) {
+            return {
+                title: `**${entry.user_name}** posted a new item on Instagram Story\n\nDirect video link: ${entry.entry_video}`
+            };
+        }
     }
 }
 

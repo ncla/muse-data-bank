@@ -54,11 +54,9 @@ class InstagramFollowingTracker extends Tracker {
             }
 
             // Instagram API doesn't return user_name of the person that is following these users
-            response.forEach((following, followingIndex) => {
-                 response[followingIndex]['user_name'] = usersIndexedByApiId[following['user_id']]['id']
+            this.dataEntries.forEach((following, followingIndex) => {
+                this.dataEntries[followingIndex]['user_name'] = usersIndexedByApiId[following['user_id']]['id']
             });
-
-            this.dataEntries = response;
         });
     }
 
