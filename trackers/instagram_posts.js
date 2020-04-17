@@ -6,12 +6,9 @@ var moment = require('moment');
 var winston = require('winston');
 const Promise = require('bluebird');
 var _ = require('underscore');
-var argv = require('yargs').argv;
-const util = require('util');
-const exec = util.promisify(require('child_process').exec);
 
 class InstagramPostTracker extends Tracker {
-    constructor(credentials, usersToTrack, db) {
+    constructor(credentials, usersToTrack, roleId) {
         super(credentials, usersToTrack);
 
         this.usersToTrack = usersToTrack;
@@ -20,79 +17,86 @@ class InstagramPostTracker extends Tracker {
 
         this.dbTable = 'instagram_posts';
 
-        this.db = db;
-
         this.dbCheckAgainst = {
             user_id: 'user_id',
             entry_id: 'entry_id'
         };
 
+        this.pingableRoleId = roleId;
+
         return this;
     }
 
     pullData() {
-        var igUserIdsApi = _.map(_.where(this.usersToTrack, {posts: true}), (user) => {
-            return user.id_api;
-        });
+        return Promise.map(_.where(this.usersToTrack, {posts: true}), (user) => {
+            return request(`https://www.instagram.com/${user.id}/?__a=1`, {
+                method: 'GET',
+                headers: {
+                    'accept': '*/*',
+                    'accept-encoding': 'gzip, deflate, br',
+                    'accept-language': 'en-US,en;q=0.9,lv;q=0.8',
+                    'cache-control': 'no-cache',
+                    'dnt': '1',
+                    'pragma': 'no-cache',
+                    'referer': `https://www.instagram.com/${user.id}/`,
+                    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36',
+                    'x-requested-with': 'XMLHttpRequest',
+                },
+                json: true,
+                timeout: (30 * 1000),
+                resolveWithFullResponse: true,
+                gzip: true
+            }).then((response) => {
+                winston.debug(`${this.constructor.name} :: Response status code ${response.statusCode}`);
 
-        if (igUserIdsApi.length === 0) {
-            return Promise.reject('No users');
-        }
+                var responseBody = response.body;
 
-        winston.debug(`${this.constructor.name} :: Calling shell to run PHP script`);
+                try {
+                    var username = responseBody.graphql.user.username;
+                    var userAvatar = responseBody.graphql.user.profile_pic_url;
 
-        return exec(
-            `php instagram/Posts.php ${this.credentials.userName} ${this.credentials.password} ${igUserIdsApi.join(',')}`,
-            {
-                maxBuffer: 1024 * 500
-            }
-        ).then(std => {
-            winston.debug(`${this.constructor.name} :: Shell response length - ${std.stdout.length}`);
-            winston.debug(`${this.constructor.name} :: Shell response error - ${std.stderr}`);
+                    for (let value of responseBody.graphql.user.edge_owner_to_timeline_media.edges) {
+                        var valueNode = value.node;
 
-            try {
-                this.dataEntries = JSON.parse(std.stdout);
-            } catch(e) {
-                winston.debug(`${this.constructor.name} \n ${std.stdout.length}`);
-                return Promise.reject(e);
-            }
-
-        });
+                        this.dataEntries.push({
+                            user_id: valueNode.owner.id,
+                            user_name: username,
+                            user_avatar: userAvatar,
+                            entry_id: valueNode.id + '_' + valueNode.owner.id,
+                            entry_link_id: valueNode.shortcode,
+                            entry_text: (valueNode.edge_media_to_caption.edges.length > 0 ? valueNode.edge_media_to_caption.edges[0].node.text : null),
+                            entry_image: valueNode.display_url,
+                            entry_created_at: moment(valueNode.taken_at_timestamp * 1000).utc().format('YYYY-MM-DD HH:mm:ss'),
+                            isNewEntry: false
+                        });
+                    }
+                } catch (err) {
+                    winston.error(err);
+                    winston.debug(response.body);
+                    throw Error(`Instagram response body has something bad! HTTP Status Code: ${response.statusCode}`);
+                }
+            }).thenWait(5000);
+        }, {concurrency: 1});
     }
 
     composeNotificationMessage(entry) {
-        var embedProperty = {
-            "title": entry.entry_text,
-            "type": "rich",
-            "url": `https://www.instagram.com/p/${entry.entry_link_id}/`,
-            "timestamp": entry.entry_created_at,
-            "color": "15844367",
-            "author": {
-                "name": entry.user_name,
-                "icon_url": entry.user_avatar
+        return {
+            title: `${this.getRoleIdNotifyString()} **${entry.user_name}** posted on Instagram`,
+            embed: {
+                "title": entry.entry_text,
+                "type": "rich",
+                "url": `https://www.instagram.com/p/${entry.entry_link_id}/`,
+                "timestamp": entry.entry_created_at,
+                "color": "15844367",
+                "author": {
+                    "name": entry.user_name,
+                    "icon_url": entry.user_avatar
+                },
+                "image": {
+                    "url": entry.entry_image
+                }
             }
         };
-
-        if (entry.hasOwnProperty('entry_image')) {
-            embedProperty['image'] = {
-                "url": entry.entry_image
-            };
-
-            return {
-                title: `**${entry.user_name}** posted on Instagram`,
-                embed: embedProperty
-            };
-        }
-
-        // Video support in embeds does not exist as of writing
-        // https://support.discordapp.com/hc/en-us/community/posts/360037387352-Videos-in-Rich-Embeds
-        // "For the webhook embed objects, you can set every field except ..video."
-        // https://discordapp.com/developers/docs/resources/webhook#execute-webhook
-        if (entry.hasOwnProperty('entry_video')) {
-            return {
-                title: `**${entry.user_name}** posted on Instagram <${embedProperty.url}>\n\nDirect video link: ${entry.entry_video}`
-            };
-        }
     }
 }
 

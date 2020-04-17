@@ -91,63 +91,63 @@
     {
       "id": "nowherethomas",
       "id_api": "5828783",
-      "posts": true,
+      "posts": false,
       "following": false,
       "stories": true
     },
     {
       "id": "domanderson666",
       "id_api": "53138300",
-      "posts": true,
+      "posts": false,
       "following": false,
       "stories": true
     },
     {
       "id": "marc_carolan",
       "id_api": "8407245",
-      "posts": true,
+      "posts": false,
       "following": false,
       "stories": true
     },
     {
       "id": "richcostey",
       "id_api": "629553006",
-      "posts": true,
+      "posts": false,
       "following": false,
       "stories": true
     },
     {
-      "id": "drpeppersjadedheartsclubband",
+      "id": "thejadedheartsclub",
       "id_api": "6120750907",
-      "posts": true,
+      "posts": false,
       "following": false,
       "stories": true
     },
     {
       "id": "captmorganized71",
       "id_api": "4117511670",
-      "posts": true,
+      "posts": false,
       "following": false,
       "stories": true
     },
     {
       "id": "musedancers",
       "id_api": "12085868722",
-      "posts": true,
+      "posts": false,
       "following": false,
       "stories": true
     },
     {
       "id": "the__powerglove",
       "id_api": "5573589870",
-      "posts": true,
+      "posts": false,
       "following": false,
       "stories": true
     },
     {
       "id": "murph_the_robot",
       "id_api": "11301167277",
-      "posts": true,
+      "posts": false,
       "following": false,
       "stories": false
     }

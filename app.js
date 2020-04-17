@@ -23,6 +23,10 @@ String.prototype.trunc = function(n) {
     return this.substr(0, n - 1) + (this.length > n ? '&hellip;' : '');
 };
 
+Promise.prototype.thenWait = function thenWait(time) {
+    return this.then(result => new Promise(resolve => setTimeout(resolve, time, result)));
+};
+
 var globalLog = require('global-request-logger');
 globalLog.initialize();
 
@@ -125,7 +129,7 @@ readOptionsFile.then(function (data) {
             consumer_secret: env.TWITTER_CONSUMER_SECRET
         }, usersToTrack.twitter, env.ROLE_ID_TWITTER_FOLLOWING),
 
-        InstagramPosts: new InstagramPostTracker({userName: env.INSTAGRAM_USERNAME, password: env.INSTAGRAM_PASSWORD}, usersToTrack.instagram, db),
+        InstagramPosts: new InstagramPostTracker({userName: env.INSTAGRAM_USERNAME, password: env.INSTAGRAM_PASSWORD}, usersToTrack.instagram, env.ROLE_ID_INSTAGRAM_POSTS),
 
         InstagramFollowing: new InstagramFollowingTracker({userName: env.INSTAGRAM_USERNAME, password: env.INSTAGRAM_PASSWORD}, usersToTrack.instagram),
 
