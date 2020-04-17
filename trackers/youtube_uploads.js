@@ -12,7 +12,7 @@ request = request.defaults({jar: true});
 
 class YoutubeUploadTracker extends Tracker
 {
-    constructor(credentials, usersToTrack) {
+    constructor(credentials, usersToTrack, roleId) {
         super(credentials);
 
         this.usersToTrack = usersToTrack;
@@ -22,6 +22,8 @@ class YoutubeUploadTracker extends Tracker
         this.dbCheckAgainst = {
             entry_id: 'entry_id'
         };
+
+        this.pingableRoleId = roleId;
 
         return this;
     }
@@ -66,7 +68,7 @@ class YoutubeUploadTracker extends Tracker
 
     composeNotificationMessage(entry) {
         return {
-            title: `**${entry.user_name}** uploaded a video on YouTube`,
+            title: `${this.getRoleIdNotifyString()} **${entry.user_name}** uploaded a video on YouTube`,
             embed: {
                 "title": entry.entry_text,
                 "type": "rich",

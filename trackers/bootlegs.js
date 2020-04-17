@@ -11,7 +11,7 @@ request = request.defaults({jar: true});
 
 class MuseBootlegsTracker extends Tracker
 {
-    constructor(credentials, usersToTrack) {
+    constructor(credentials, usersToTrack, roleId) {
         super(credentials);
 
         this.dbTable = 'bootlegs';
@@ -19,6 +19,8 @@ class MuseBootlegsTracker extends Tracker
         this.dbCheckAgainst = {
             entry_id: 'entry_id'
         };
+
+        this.pingableRoleId = roleId;
 
         return this;
     }
@@ -75,7 +77,7 @@ class MuseBootlegsTracker extends Tracker
 
     composeNotificationMessage(entry) {
         return {
-            title: `New bootleg on musebootlegs.com`,
+            title: `${this.getRoleIdNotifyString()} New bootleg on musebootlegs.com`,
             embed: {
                 "title": entry.entry_text,
                 "type": "rich",

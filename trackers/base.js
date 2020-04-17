@@ -6,13 +6,14 @@ var Promise = require("bluebird");
 
 class Tracker
 {
-
     constructor(credentials) {
         this.credentials = credentials;
 
         this.dataEntries = [];
 
         this.columnsToInsert = ['user_id', 'user_name', 'entry_id', 'entry_text', 'entry_created_at'];
+
+        this.pingableRoleId = null;
 
         return this;
     }
@@ -96,6 +97,9 @@ class Tracker
         return this;
     }
 
+    getRoleIdNotifyString() {
+        return this.pingableRoleId ? `<@&${this.pingableRoleId}>` : '';
+    }
 }
 
 module.exports = Tracker;

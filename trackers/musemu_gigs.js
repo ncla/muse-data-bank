@@ -9,7 +9,7 @@ var winston = require('winston');
 let cheerio = require('cheerio');
 
 class MuseGigTracker extends Tracker {
-    constructor(credentials, usersToTrack) {
+    constructor(credentials, usersToTrack, roleId) {
         super(credentials, usersToTrack);
 
         this.dbTable = 'musemu_gigs';
@@ -20,6 +20,8 @@ class MuseGigTracker extends Tracker {
         };
 
         this.columnsToInsert = ['entry_id', 'entry_text', 'entry_created_at'];
+
+        this.pingableRoleId = roleId;
 
         return this;
     }
@@ -67,7 +69,7 @@ class MuseGigTracker extends Tracker {
 
     composeNotificationMessage(entry) {
         return {
-            title: `New gig added on muse.mu`,
+            title: `${this.getRoleIdNotifyString()} New gig added on muse.mu`,
             embed: {
                 "title": entry.entry_text,
                 "type": "rich",

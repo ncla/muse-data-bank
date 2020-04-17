@@ -9,7 +9,7 @@ var winston = require('winston');
 let cheerio = require('cheerio');
 
 class MuseNewsTracker extends Tracker {
-    constructor(credentials, usersToTrack) {
+    constructor(credentials, usersToTrack, roleId) {
         super(credentials, usersToTrack);
 
         this.dbTable = 'musemu_news';
@@ -20,6 +20,8 @@ class MuseNewsTracker extends Tracker {
         };
 
         this.columnsToInsert = ['entry_id', 'entry_text'];
+
+        this.pingableRoleId = roleId;
 
         return this;
     }
@@ -50,7 +52,7 @@ class MuseNewsTracker extends Tracker {
 
     composeNotificationMessage(entry) {
         return {
-            title: `New news post added on muse.mu`,
+            title: `${this.getRoleIdNotifyString()} New news post added on muse.mu`,
             embed: {
                 "title": entry.entry_text,
                 "type": "rich",

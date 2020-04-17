@@ -11,10 +11,12 @@ const Promise = require('bluebird');
 
 class TwitterLikesTracker extends TwitterTweeetTracker
 {
-    constructor(credentials, usersToTrack) {
+    constructor(credentials, usersToTrack, roleId) {
         super(credentials, usersToTrack);
 
         this.dbTable = 'twitter_likes';
+
+        this.pingableRoleId = roleId;
 
         return this;
     }
@@ -40,7 +42,7 @@ class TwitterLikesTracker extends TwitterTweeetTracker
 
     composeNotificationMessage(entry) {
         return {
-            title: `**${entry.user_name}** liked a tweet`,
+            title: `${this.getRoleIdNotifyString()} **${entry.user_name}** liked a tweet`,
             embed: {
                 "title": entry.entry_text,
                 "type": "rich",

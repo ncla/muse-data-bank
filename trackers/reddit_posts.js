@@ -7,7 +7,7 @@ const snoowrap = require('snoowrap');
 var winston = require('winston');
 
 class RedditPostTracker extends Tracker {
-    constructor(credentials, usersToTrack) {
+    constructor(credentials, usersToTrack, roleId) {
         super(credentials, usersToTrack);
 
         this.usersToTrack = usersToTrack;
@@ -20,6 +20,8 @@ class RedditPostTracker extends Tracker {
             user_id: 'user_id',
             entry_id: 'entry_id'
         };
+
+        this.pingableRoleId = roleId;
 
         this.client = new snoowrap(this.credentials);
 
@@ -48,7 +50,7 @@ class RedditPostTracker extends Tracker {
 
     composeNotificationMessage(entry) {
         return {
-            title: `New Reddit post on /r/muse by **${entry.user_name}**`,
+            title: `${this.getRoleIdNotifyString()} New Reddit post on /r/muse by **${entry.user_name}**`,
             embed: {
                 "title": entry.entry_text,
                 "type": "rich",

@@ -23,7 +23,7 @@ request = request.defaults({
 });
 
 class DimeTracker extends Tracker {
-    constructor(credentials, usersToTrack) {
+    constructor(credentials, usersToTrack, roleId) {
         super(credentials, usersToTrack);
 
         this.dbTable = 'dime';
@@ -33,6 +33,8 @@ class DimeTracker extends Tracker {
         };
 
         this.columnsToInsert = ['entry_id', 'entry_text'];
+
+        this.pingableRoleId = roleId;
 
         return this;
     }
@@ -91,7 +93,7 @@ class DimeTracker extends Tracker {
 
     composeNotificationMessage(entry) {
         return {
-            title: `New bootleg torrent on DIME`,
+            title: `${this.getRoleIdNotifyString()} New bootleg torrent on DIME`,
             embed: {
                 "title": entry.entry_text,
                 "type": "rich",

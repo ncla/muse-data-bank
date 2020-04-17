@@ -113,17 +113,17 @@ readOptionsFile.then(function (data) {
         TwitterTweets: new TwitterTweetTracker({
             consumer_key: env.TWITTER_CONSUMER_KEY,
             consumer_secret: env.TWITTER_CONSUMER_SECRET
-        }, usersToTrack.twitter),
+        }, usersToTrack.twitter, env.ROLE_ID_TWITTER_TWEETS),
 
         TwitterLikes: new TwitterLikesTracker({
             consumer_key: env.TWITTER_CONSUMER_KEY,
             consumer_secret: env.TWITTER_CONSUMER_SECRET
-        }, usersToTrack.twitter),
+        }, usersToTrack.twitter, env.ROLE_ID_TWITTER_LIKES),
 
         TwitterFollowing: new TwitterFollowingTracker({
             consumer_key: env.TWITTER_CONSUMER_KEY,
             consumer_secret: env.TWITTER_CONSUMER_SECRET
-        }, usersToTrack.twitter),
+        }, usersToTrack.twitter, env.ROLE_ID_TWITTER_FOLLOWING),
 
         InstagramPosts: new InstagramPostTracker({userName: env.INSTAGRAM_USERNAME, password: env.INSTAGRAM_PASSWORD}, usersToTrack.instagram, db),
 
@@ -136,15 +136,15 @@ readOptionsFile.then(function (data) {
             clientSecret: env.REDDIT_CLIENT_SECRET,
             username: env.REDDIT_USERNAME,
             password: env.REDDIT_PASSWORD
-        }),
+        }, null, env.ROLE_ID_REDDIT_POSTS),
 
-        MuseGigs: new MuseGigTracker(),
-        MuseNews: new MuseNewsTracker(),
-        ShopMuse: new ShopMuseTracker(),
+        MuseGigs: new MuseGigTracker(null, null, env.ROLE_ID_MUSE_GIGS),
+        MuseNews: new MuseNewsTracker(null, null, env.ROLE_ID_MUSE_NEWS),
+        ShopMuse: new ShopMuseTracker(null, null, env.ROLE_ID_MUSE_SHOP),
         FacebookPosts: new FacebookPostsTracker({appId: env.FB_APP_ID, appSecret: env.FB_APP_SECRET}),
-        MuseBootlegs: new MuseBootlegsTracker({username: env.MUSEBOOTLEGS_USERNAME, password: env.MUSEBOOTLEGS_PASSWORD}),
-        YoutubeUploads: new YoutubeUploadTracker({apiKey: env.YOUTUBE_DATA_API}, usersToTrack.youtube),
-        DimeTorrents: new DimeTracker({username: env.DIME_USERNAME, password: env.DIME_PASSWORD})
+        MuseBootlegs: new MuseBootlegsTracker({username: env.MUSEBOOTLEGS_USERNAME, password: env.MUSEBOOTLEGS_PASSWORD}, null, env.ROLE_ID_MUSE_BOOTLEGS),
+        YoutubeUploads: new YoutubeUploadTracker({apiKey: env.YOUTUBE_DATA_API}, usersToTrack.youtube, env.ROLE_ID_YOUTUBE_UPLOADS),
+        DimeTorrents: new DimeTracker({username: env.DIME_USERNAME, password: env.DIME_PASSWORD}, null, env.ROLE_ID_DIME_BOOTLEGS)
     };
 
     if (argv.all === true) {

@@ -9,7 +9,7 @@ var async = require('async');
 var winston = require('winston');
 
 class ShopMuseTracker extends Tracker {
-    constructor(credentials, usersToTrack) {
+    constructor(credentials, usersToTrack, roleId) {
         super(credentials, usersToTrack);
 
         this.dbTable = 'shop_muse';
@@ -19,6 +19,8 @@ class ShopMuseTracker extends Tracker {
         };
 
         this.columnsToInsert = ['entry_id', 'entry_text'];
+
+        this.pingableRoleId = roleId;
 
         return this;
     }
@@ -94,7 +96,7 @@ class ShopMuseTracker extends Tracker {
 
     composeNotificationMessage(entry) {
         return {
-            title: `New item on shop.muse.mu`,
+            title: `${this.getRoleIdNotifyString()} New item on shop.muse.mu`,
             embed: {
                 "title": entry.entry_text,
                 "type": "rich",
