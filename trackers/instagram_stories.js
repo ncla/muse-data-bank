@@ -3,7 +3,6 @@
 var Tracker = require('./base');
 var request = require('request');
 var moment = require('moment');
-var Client = require('instagram-private-api').V1;
 var winston = require('winston');
 var _ = require('underscore');
 const util = require('util');

@@ -5,7 +5,6 @@ var request = require('request-promise-native');
 var moment = require('moment');
 var winston = require('winston');
 const Promise = require('bluebird');
-var Client = require('instagram-private-api').V1;
 var _ = require('underscore');
 var argv = require('yargs').argv;
 const util = require('util');

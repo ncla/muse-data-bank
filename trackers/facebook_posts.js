@@ -33,7 +33,7 @@ class FacebookPostsTracker extends Tracker {
                 {},
                 (response) => {
                     if (!response || response.error) {
-                        reject(!res ? 'Error occurred' : res.error);
+                        reject(!response ? 'Error occurred' : response.error);
                     }
 
                     response.data.forEach((post) => {
