@@ -82,7 +82,8 @@ var db = require('knex')({
     client: 'sqlite3',
     connection: {
         filename: "./sqlite.db"
-    }
+    },
+    useNullAsDefault: true
 });
 
 var readOptionsFile = new Promise(function(resolve, reject) {
