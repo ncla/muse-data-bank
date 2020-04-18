@@ -27,9 +27,6 @@ Promise.prototype.thenWait = function thenWait(time) {
     return this.then(result => new Promise(resolve => setTimeout(resolve, time, result)));
 };
 
-var globalLog = require('global-request-logger');
-globalLog.initialize();
-
 var dotenv = require('dotenv').config();
 var env = process.env;
 var fs = require('fs');
@@ -99,14 +96,6 @@ var readOptionsFile = new Promise(function(resolve, reject) {
 // db.on('query', function(data) {
 //     console.log(data);
 // });
-
-globalLog.on('success', function(request, response) {
-    winston.debug(`Request => ${request.href} Status => ${response.statusCode}`);
-});
-
-globalLog.on('error', function(request, response) {
-    winston.debug(`Request => ${request.href} Status => ${response.statusCode}`);
-});
 
 var trackersActive = [];
 

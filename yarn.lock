@@ -731,13 +731,6 @@ global-prefix@^0.1.4:
     is-windows "^0.2.0"
     which "^1.2.12"
 
-global-request-logger@^0.1.1:
-  version "0.1.1"
-  resolved "https://registry.yarnpkg.com/global-request-logger/-/global-request-logger-0.1.1.tgz#839a126537031e33b7e1ac077608b4d7995b01fe"
-  integrity sha1-g5oSZTcDHjO34awHdgi015lbAf4=
-  dependencies:
-    lodash "~2.4.1"
-
 graceful-fs@^4.1.2:
   version "4.1.15"
   resolved "https://registry.yarnpkg.com/graceful-fs/-/graceful-fs-4.1.15.tgz#ffb703e1066e8a0eeaa4c8b80ba9253eeefbfb00"
@@ -1126,11 +1119,6 @@ lodash@^4.6.0:
   version "4.17.11"
   resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.11.tgz#b39ea6229ef607ecd89e2c8df12536891cac9b8d"
   integrity sha512-cQKh8igo5QUhZ7lg38DYWAxMvjSAKG0A8wGSVimP07SIUEK2UO+arSRKbRZWtelMtN5V0Hkwh5ryOto/SshYIg==
-
-lodash@~2.4.1:
-  version "2.4.2"
-  resolved "https://registry.yarnpkg.com/lodash/-/lodash-2.4.2.tgz#fadd834b9683073da179b3eae6d9c0d15053f73e"
-  integrity sha1-+t2DS5aDBz2hebPq5tnA0VBT9z4=
 
 lru-cache@^4.0.1:
   version "4.1.3"
