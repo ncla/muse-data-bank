@@ -56,19 +56,35 @@ class InstagramPostTracker extends Tracker {
                     var userAvatar = responseBody.graphql.user.profile_pic_url;
 
                     for (let value of responseBody.graphql.user.edge_owner_to_timeline_media.edges) {
-                        var valueNode = value.node;
+                        var node = value.node;
 
-                        this.dataEntries.push({
-                            user_id: valueNode.owner.id,
+                        let pushableData = {
+                            user_id: node.owner.id,
                             user_name: username,
                             user_avatar: userAvatar,
-                            entry_id: valueNode.id + '_' + valueNode.owner.id,
-                            entry_link_id: valueNode.shortcode,
-                            entry_text: (valueNode.edge_media_to_caption.edges.length > 0 ? valueNode.edge_media_to_caption.edges[0].node.text : null),
-                            entry_image: valueNode.display_url,
-                            entry_created_at: moment(valueNode.taken_at_timestamp * 1000).utc().format('YYYY-MM-DD HH:mm:ss'),
+                            entry_id: node.id + '_' + node.owner.id,
+                            entry_link_id: node.shortcode,
+                            entry_text: (node.edge_media_to_caption.edges.length > 0 ? node.edge_media_to_caption.edges[0].node.text : null),
+                            entry_image: node.display_url,
+                            entry_created_at: moment(node.taken_at_timestamp * 1000).utc().format('YYYY-MM-DD HH:mm:ss'),
                             isNewEntry: false
-                        });
+                        };
+
+                        this.dataEntries.push(pushableData);
+
+                        // Handle additional image/video entries if the post is a carousel
+                        if (node.__typename === 'GraphSidecar'
+                            && node.hasOwnProperty('edge_sidecar_to_children')
+                            && node.edge_sidecar_to_children.edges.length > 1) {
+                            // Skip first carousel entry
+                            for(var i = 1; i < node.edge_sidecar_to_children.edges.length; i++) {
+                                let sidecarPushableData = {...pushableData};
+
+                                sidecarPushableData.entry_image = node.edge_sidecar_to_children.edges[i].node.display_url;
+                                this.dataEntries.push(sidecarPushableData);
+                            }
+                        }
+
                     }
                 } catch (err) {
                     winston.error(err);
