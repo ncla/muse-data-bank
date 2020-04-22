@@ -34,7 +34,12 @@ class TwitterTweetTracker extends Tracker
 
     pullData() {
         return Promise.map(_.where(this.usersToTrack, {tweets: true}), (user) => {
-            return this.client.get('statuses/user_timeline', { user_id: user.id }).then((result) => {
+            return this.client.get('statuses/user_timeline',
+                {
+                    user_id: user.id,
+                    tweet_mode: 'extended'
+                }
+                ).then((result) => {
                 for (let value of result.data) {
                     this.dataEntries.push({
                         user_id: value.user.id_str,
@@ -42,7 +47,8 @@ class TwitterTweetTracker extends Tracker
                         user_screenname: value.user.screen_name,
                         user_avatar: value.user.profile_image_url_https,
                         entry_id: value.id_str,
-                        entry_text: value.text,
+                        entry_text: value.full_text,
+                        entry_description: value.full_text,
                         entry_created_at: moment(value.created_at, 'dd MMM DD HH:mm:ss ZZ YYYY').utc().format('YYYY-MM-DD HH:mm:ss'),
                         isNewEntry: false
                     });
@@ -55,7 +61,6 @@ class TwitterTweetTracker extends Tracker
         return {
             title: `${this.getRoleIdNotifyString()} **${entry.user_name}** tweeted`,
             embed: {
-                "title": entry.entry_text,
                 "type": "rich",
                 "description": entry.entry_description,
                 "url": `https://twitter.com/${entry.user_screenname}/status/${entry.entry_id}`,
