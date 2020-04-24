@@ -1,13 +1,11 @@
 "use strict";
 
 var Tracker = require('./base');
-var fs = require('fs');
 var moment = require('moment');
 var winston = require('winston');
 var request = require('request-promise-native');
-let cheerio = require('cheerio');
-var _ = require('underscore');
 const Promise = require('bluebird');
+var _ = require('underscore');
 request = request.defaults({jar: true});
 
 class YoutubeUploadTracker extends Tracker
@@ -29,36 +27,28 @@ class YoutubeUploadTracker extends Tracker
     }
 
     pullData() {
-        return Promise.map(this.usersToTrack, (channel) => {
+        return Promise.map(_.where(this.usersToTrack, {uploads: true}), (channel) => {
             return request({
-                url: `https://www.googleapis.com/youtube/v3/channels/?id=${channel.channel_id}&part=contentDetails,snippet&key=${this.credentials.apiKey}`,
+                url: `https://www.googleapis.com/youtube/v3/playlistItems`,
                 method: 'GET',
-                json: true
+                json: true,
+                qs: {
+                    playlistId: channel.uploads_playlist_id,
+                    maxResults: '25',
+                    part: 'snippet',
+                    key: this.credentials.apiKey,
+                }
             }).then((data) => {
-                var userAvatar = data.items[0].snippet.thumbnails.default.url;
-                var uploadsPlaylistId = data.items[0].contentDetails.relatedPlaylists.uploads;
-
-                return request({
-                    url: `https://www.googleapis.com/youtube/v3/playlistItems?playlistId=${uploadsPlaylistId}&maxResults=25&part=snippet%2CcontentDetails&key=${this.credentials.apiKey}`,
-                    method: 'GET',
-                    json: true
-                }).then(data => {
-                    return {
-                        response: data,
-                        userAvatar: userAvatar
-                    }
-                });
-            }).then((data) => {
-                data.response.items.forEach((item) => {
+                data.items.forEach((item) => {
                     this.dataEntries.push({
                         user_id: channel.channel_id,
                         user_name: channel.username,
-                        user_avatar: data.userAvatar,
-                        entry_id: item.contentDetails.videoId,
+                        user_avatar: channel.avatar_url,
+                        entry_id: item.snippet.resourceId.videoId,
                         entry_text: item.snippet.title,
                         entry_image: item.snippet.thumbnails.standard !== undefined ? item.snippet.thumbnails.standard.url : item.snippet.thumbnails.default.url,
                         entry_description: item.snippet.description,
-                        entry_created_at: moment(item.contentDetails.videoPublishedAt).utc().format('YYYY-MM-DD HH:mm:ss'),
+                        entry_created_at: moment(item.snippet.publishedAt).utc().format('YYYY-MM-DD HH:mm:ss'),
                         isNewEntry: false
                     });
                 });

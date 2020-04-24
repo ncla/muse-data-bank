@@ -155,11 +155,17 @@
   "youtube": [
     {
       "username": "muse",
-      "channel_id": "UCGGhM6XCSJFQ6DTRffnKRIw"
+      "channel_id": "UCGGhM6XCSJFQ6DTRffnKRIw",
+      "uploads_playlist_id": "UUGGhM6XCSJFQ6DTRffnKRIw",
+      "avatar_url": "https://yt3.ggpht.com/a/AATXAJyCalVyFs_seZmv6CVDdMB5iyI_5L2c1_OBJA=s88-c-k-c0xffffffff-no-rj-mo",
+      "uploads": true
     },
     {
       "username": "nowheretom11",
-      "channel_id": "UCxYSaC9MRYGU1KQgRhtaW3A"
+      "channel_id": "UCxYSaC9MRYGU1KQgRhtaW3A",
+      "uploads_playlist_id": "UUxYSaC9MRYGU1KQgRhtaW3A",
+      "avatar_url": "https://yt3.ggpht.com/a/AATXAJwbK7mu5MrojpqYn4_oGZEEHiuhzYrUqqp_wQ=s88-c-k-c0xffffffff-no-rj-mo",
+      "uploads": false
     }
   ]
 }
