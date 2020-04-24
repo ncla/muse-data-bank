@@ -61,14 +61,15 @@ class TwitterTweetTracker extends Tracker
         return {
             title: `${this.getRoleIdNotifyString()} **${entry.user_name}** tweeted`,
             embed: {
-                "type": "rich",
-                "description": entry.entry_description,
-                "url": `https://twitter.com/${entry.user_screenname}/status/${entry.entry_id}`,
-                "timestamp": entry.entry_created_at,
-                "color": "3447003",
-                "author": {
-                    "name": entry.user_name,
-                    "icon_url": entry.user_avatar
+                'title': 'Open Tweet',
+                'type': 'rich',
+                'description': entry.entry_description,
+                'url': `https://twitter.com/${entry.user_screenname}/status/${entry.entry_id}`,
+                'timestamp': entry.entry_created_at,
+                'color': '3447003',
+                'author': {
+                    'name': entry.user_name,
+                    'icon_url': entry.user_avatar
                 }
             }
         };
