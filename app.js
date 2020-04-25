@@ -13,6 +13,7 @@ var ShopMuseTracker = require('./trackers/shop_muse');
 var FacebookPostsTracker = require('./trackers/facebook_posts');
 var MuseBootlegsTracker = require('./trackers/bootlegs');
 var YoutubeUploadTracker = require('./trackers/youtube_uploads');
+var YoutubePlaylistTracker = require('./trackers/youtube_playlists');
 var DimeTracker = require('./trackers/dime');
 
 var NotifyManager = require('./notify_manager');
@@ -137,7 +138,8 @@ readOptionsFile.then(function (data) {
         ShopMuse: new ShopMuseTracker(null, null, env.ROLE_ID_MUSE_SHOP),
         FacebookPosts: new FacebookPostsTracker({appId: env.FB_APP_ID, appSecret: env.FB_APP_SECRET}),
         MuseBootlegs: new MuseBootlegsTracker({username: env.MUSEBOOTLEGS_USERNAME, password: env.MUSEBOOTLEGS_PASSWORD}, null, env.ROLE_ID_MUSE_BOOTLEGS),
-        YoutubeUploads: new YoutubeUploadTracker({apiKey: env.YOUTUBE_DATA_API}, usersToTrack.youtube, env.ROLE_ID_YOUTUBE_UPLOADS),
+        YoutubeUploads: new YoutubeUploadTracker({apiKey: env.YOUTUBE_UPLOADS_DATA_API}, usersToTrack.youtube, env.ROLE_ID_YOUTUBE_UPLOADS),
+        YoutubePlaylists: new YoutubePlaylistTracker({apiKey: env.YOUTUBE_PLAYLIST_DATA_API}, null, env.ROLE_ID_YOUTUBE_PLAYLISTS, db),
         DimeTorrents: new DimeTracker({username: env.DIME_USERNAME, password: env.DIME_PASSWORD}, null, env.ROLE_ID_DIME_BOOTLEGS)
     };
 
