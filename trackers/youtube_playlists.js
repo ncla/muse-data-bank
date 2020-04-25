@@ -138,7 +138,7 @@ class YoutubePlaylistTracker extends Tracker
 
     composeNotificationMessage(entry) {
         return {
-            title: `${this.getRoleIdNotifyString()} **${entry.user_name}** has added new video to a playlist`,
+            title: `${this.getRoleIdNotifyString()} **Muse** has added new video to a playlist`,
             embed: {
                 'title': `Playlist: ${entry.playlist_title} | Video: ${entry.video_title}`,
                 'type': 'rich',
