@@ -4,6 +4,7 @@ var TwitterTweetTracker = require('./trackers/twitter_tweets');
 var TwitterLikesTracker = require('./trackers/twitter_likes');
 var TwitterFollowingTracker = require('./trackers/twitter_following');
 var InstagramPostTracker = require('./trackers/instagram_posts');
+var InstagramPostProxiedTracker = require('./trackers/instagram_posts_proxied')
 var InstagramFollowingTracker = require('./trackers/instagram_following');
 var InstagramStoriesTracker = require('./trackers/instagram_stories');
 var RedditPostTracker = require('./trackers/reddit_posts');
@@ -15,6 +16,7 @@ var MuseBootlegsTracker = require('./trackers/bootlegs');
 var YoutubeUploadTracker = require('./trackers/youtube_uploads');
 var YoutubePlaylistTracker = require('./trackers/youtube_playlists');
 var DimeTracker = require('./trackers/dime');
+let ShopSitemapMuseTracker = require('./trackers/shop_sitemap');
 
 var NotifyManager = require('./notify_manager');
 var http = require('http');
@@ -120,7 +122,7 @@ readOptionsFile.then(function (data) {
             consumer_secret: env.TWITTER_CONSUMER_SECRET
         }, usersToTrack.twitter, env.ROLE_ID_TWITTER_FOLLOWING),
 
-        InstagramPosts: new InstagramPostTracker({userName: env.INSTAGRAM_USERNAME, password: env.INSTAGRAM_PASSWORD}, usersToTrack.instagram, env.ROLE_ID_INSTAGRAM_POSTS),
+        InstagramPosts: new InstagramPostProxiedTracker({userName: env.INSTAGRAM_USERNAME, password: env.INSTAGRAM_PASSWORD}, usersToTrack.instagram, env.ROLE_ID_INSTAGRAM_POSTS),
 
         InstagramFollowing: new InstagramFollowingTracker({userName: env.INSTAGRAM_USERNAME, password: env.INSTAGRAM_PASSWORD}, usersToTrack.instagram),
 
@@ -136,6 +138,7 @@ readOptionsFile.then(function (data) {
         MuseGigs: new MuseGigTracker(null, null, env.ROLE_ID_MUSE_GIGS),
         MuseNews: new MuseNewsTracker(null, null, env.ROLE_ID_MUSE_NEWS),
         ShopMuse: new ShopMuseTracker(null, null, env.ROLE_ID_MUSE_SHOP),
+        ShopSitemapMuse: new ShopSitemapMuseTracker(null, null, env.ROLE_ID_SITEMAPS),
         FacebookPosts: new FacebookPostsTracker({appId: env.FB_APP_ID, appSecret: env.FB_APP_SECRET}),
         MuseBootlegs: new MuseBootlegsTracker({username: env.MUSEBOOTLEGS_USERNAME, password: env.MUSEBOOTLEGS_PASSWORD}, null, env.ROLE_ID_MUSE_BOOTLEGS),
         YoutubeUploads: new YoutubeUploadTracker({apiKey: env.YOUTUBE_UPLOADS_DATA_API}, usersToTrack.youtube, env.ROLE_ID_YOUTUBE_UPLOADS),
