@@ -17,6 +17,7 @@ var YoutubeUploadTracker = require('./trackers/youtube_uploads');
 var YoutubePlaylistTracker = require('./trackers/youtube_playlists');
 var DimeTracker = require('./trackers/dime');
 let ShopSitemapMuseTracker = require('./trackers/shop_sitemap');
+let ShopSitemapMuseTrackerProxied = require('./trackers/shop_sitemap_proxied');
 
 var NotifyManager = require('./notify_manager');
 var http = require('http');
@@ -139,6 +140,7 @@ readOptionsFile.then(function (data) {
         MuseNews: new MuseNewsTracker(null, null, env.ROLE_ID_MUSE_NEWS),
         ShopMuse: new ShopMuseTracker(null, null, env.ROLE_ID_MUSE_SHOP),
         ShopSitemapMuse: new ShopSitemapMuseTracker(null, null, env.ROLE_ID_SITEMAPS),
+        ShopSitemapMuseProxied: new ShopSitemapMuseTrackerProxied(null, null, env.ROLE_ID_SITEMAPS, env.SOCKS_PROXY),
         FacebookPosts: new FacebookPostsTracker({appId: env.FB_APP_ID, appSecret: env.FB_APP_SECRET}),
         MuseBootlegs: new MuseBootlegsTracker({username: env.MUSEBOOTLEGS_USERNAME, password: env.MUSEBOOTLEGS_PASSWORD}, null, env.ROLE_ID_MUSE_BOOTLEGS),
         YoutubeUploads: new YoutubeUploadTracker({apiKey: env.YOUTUBE_UPLOADS_DATA_API}, usersToTrack.youtube, env.ROLE_ID_YOUTUBE_UPLOADS),
