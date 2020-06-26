@@ -44,10 +44,10 @@ class MuseGigTrackerProxied extends Tracker {
                     url: `http://www.muse.mu/tour?page=${page}`,
                     method: 'GET',
                     timeout: (30 * 1000)
-                }).then(r => {
-                    winston.debug(`${this.constructor.name} :: Response length ${r.length}`);
+                }).then(response => {
+                    winston.debug(`${this.constructor.name} :: Response length ${response.data.length}`);
 
-                    let $ = cheerio.load(r);
+                    let $ = cheerio.load(response.data);
                     let items = $('.block-TOUR-DATES .view-content .item-list ul li');
 
                     winston.debug(`${this.constructor.name} :: Items count ${items.length}`);

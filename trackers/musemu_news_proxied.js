@@ -40,10 +40,10 @@ class MuseNewsTrackerProxied extends Tracker {
             url: `http://www.muse.mu/news`,
             method: 'GET',
             timeout: (30 * 1000)
-        }).then(r => {
-            winston.debug(`${this.constructor.name} :: Response length ${r.length}`);
+        }).then(response => {
+            winston.debug(`${this.constructor.name} :: Response length ${response.data.length}`);
 
-            let $ = cheerio.load(r);
+            let $ = cheerio.load(response.data);
             let items = $('#block-system-main .view-content .item-list ul li')
 
             items.each((i, v) => {
