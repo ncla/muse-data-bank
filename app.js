@@ -9,7 +9,9 @@ var InstagramFollowingTracker = require('./trackers/instagram_following');
 var InstagramStoriesTracker = require('./trackers/instagram_stories');
 var RedditPostTracker = require('./trackers/reddit_posts');
 var MuseGigTracker = require('./trackers/musemu_gigs');
+var MuseGigTrackerProxied = require('./trackers/musemu_gigs_proxied');
 var MuseNewsTracker = require('./trackers/musemu_news');
+var MuseNewsTrackerProxied = require('./trackers/musemu_news_proxied');
 var ShopMuseTracker = require('./trackers/shop_muse');
 var ShopMuseTrackerProxied = require('./trackers/shop_muse_proxied');
 var FacebookPostsTracker = require('./trackers/facebook_posts');
@@ -124,7 +126,7 @@ readOptionsFile.then(function (data) {
             consumer_secret: env.TWITTER_CONSUMER_SECRET
         }, usersToTrack.twitter, env.ROLE_ID_TWITTER_FOLLOWING),
 
-        InstagramPosts: new InstagramPostProxiedTracker({userName: env.INSTAGRAM_USERNAME, password: env.INSTAGRAM_PASSWORD}, usersToTrack.instagram, env.ROLE_ID_INSTAGRAM_POSTS),
+        InstagramPosts: new InstagramPostProxiedTracker({userName: env.INSTAGRAM_USERNAME, password: env.INSTAGRAM_PASSWORD}, usersToTrack.instagram, env.ROLE_ID_INSTAGRAM_POSTS, env.SOCKS_PROXY),
 
         InstagramFollowing: new InstagramFollowingTracker({userName: env.INSTAGRAM_USERNAME, password: env.INSTAGRAM_PASSWORD}, usersToTrack.instagram),
 
@@ -138,7 +140,9 @@ readOptionsFile.then(function (data) {
         }, null, env.ROLE_ID_REDDIT_POSTS),
 
         MuseGigs: new MuseGigTracker(null, null, env.ROLE_ID_MUSE_GIGS),
+        MuseGigsProxied: new MuseGigTrackerProxied(null, null, env.ROLE_ID_MUSE_GIGS, env.SOCKS_PROXY),
         MuseNews: new MuseNewsTracker(null, null, env.ROLE_ID_MUSE_NEWS),
+        MuseNewsProxied: new MuseNewsTrackerProxied(null, null, env.ROLE_ID_MUSE_NEWS, env.SOCKS_PROXY),
         ShopMuse: new ShopMuseTracker(null, null, env.ROLE_ID_MUSE_SHOP),
         ShopMuseProxied: new ShopMuseTrackerProxied(null, null, env.ROLE_ID_MUSE_SHOP, env.SOCKS_PROXY),
         ShopSitemapMuse: new ShopSitemapMuseTracker(null, null, env.ROLE_ID_SITEMAPS),
