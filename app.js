@@ -12,6 +12,7 @@ var MuseGigTracker = require('./trackers/musemu_gigs');
 var MuseGigTrackerProxied = require('./trackers/musemu_gigs_proxied');
 var MuseNewsTracker = require('./trackers/musemu_news');
 var MuseNewsTrackerProxied = require('./trackers/musemu_news_proxied');
+var MuseSitemapTracker = require('./trackers/musemu_sitemap_proxied');
 var ShopMuseTracker = require('./trackers/shop_muse');
 var ShopMuseTrackerProxied = require('./trackers/shop_muse_proxied');
 var FacebookPostsTracker = require('./trackers/facebook_posts');
@@ -143,6 +144,7 @@ readOptionsFile.then(function (data) {
         MuseGigsProxied: new MuseGigTrackerProxied(null, null, env.ROLE_ID_MUSE_GIGS, env.SOCKS_PROXY),
         MuseNews: new MuseNewsTracker(null, null, env.ROLE_ID_MUSE_NEWS),
         MuseNewsProxied: new MuseNewsTrackerProxied(null, null, env.ROLE_ID_MUSE_NEWS, env.SOCKS_PROXY),
+        MuseSitemap: new MuseSitemapTracker(null, null, env.ROLE_ID_SITEMAPS, env.SOCKS_PROXY),
         ShopMuse: new ShopMuseTracker(null, null, env.ROLE_ID_MUSE_SHOP),
         ShopMuseProxied: new ShopMuseTrackerProxied(null, null, env.ROLE_ID_MUSE_SHOP, env.SOCKS_PROXY),
         ShopSitemapMuse: new ShopSitemapMuseTracker(null, null, env.ROLE_ID_SITEMAPS),
