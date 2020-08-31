@@ -2,9 +2,10 @@
 
 var Tracker = require('./base');
 let cheerio = require('cheerio');
-var async = require('async');
 let SocksProxyAgent = require('socks-proxy-agent');
 const axios = require('axios').default;
+const requestHeaders = require('./helpers').requestHeaders
+var winston = require('winston');
 
 class ShopMuseTrackerProxied extends Tracker {
     constructor(credentials, usersToTrack, roleId, proxy) {
@@ -25,89 +26,96 @@ class ShopMuseTrackerProxied extends Tracker {
         return this;
     }
 
-    pullData() {
+    async pullData() {
         const proxy = this.proxy.split(":");
         const httpsAgent = new SocksProxyAgent({host: proxy[0], port: proxy[1]});
         const axiosClient = axios.create(httpsAgent)
-        
-        return new Promise((resolve, reject) => {
-            var q = async.queue((task, callback) => {
-                axiosClient({
+
+        const sites = [
+            {
+                'url': 'https://store.muse.mu/eu/',
+                'key': 'EU',
+            },
+            {
+                'url': 'https://usstore.muse.mu/',
+                'key': 'US'
+            }
+        ];
+
+        let products = [];
+
+        for (const site of sites) {
+            let categoryUrls = [];
+
+            await axiosClient({
+                method: 'get',
+                url: site.url,
+                headers: requestHeaders
+            }).then(response => {
+                categoryUrls = this.parseHomeResponse(response.data);
+            })
+
+            for (const categoryUrl of categoryUrls) {
+                await axiosClient({
                     method: 'get',
-                    url: task.url,
-                    headers: {
-                        'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:77.0) Gecko/20100101 Firefox/77.0',
-                        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-                        'Accept-Language': 'en-US,en;q=0.5',
-                        'Accept-Encoding': 'gzip, deflate, br',
-                        'Connection': 'keep-alive',
-                        'Upgrade-Insecure-Requests': '1',
-                        'Pragma': 'no-cache',
-                        'Cache-Control': 'no-cache',
-                        'TE': 'Trailers'
-                    }
+                    url: categoryUrl,
+                    headers: requestHeaders
                 }).then(response => {
-                    var parsed = this.parseResponse(task, response.data);
-
-                    q.push(parsed.tasks);
-
-                    if (parsed.dataEntries.length) {
-                        this.dataEntries = this.dataEntries.concat(parsed.dataEntries);
-                    }
-
-                    callback();
+                    const parsed = this.parseCategoryResponse(response.data)
+                    winston.debug(`${this.constructor.name} :: Items count ${parsed.length}, URL ${categoryUrl}`);
+                    parsed.forEach(product => {
+                        product.entry_shop_key = site.key
+                        products.push(product)
+                    })
                 })
-            }, 5);
+            }
+        }
 
-            q.drain = () => {
-                console.log(this.constructor.name + ' :: All queue items have been processed');
-                resolve();
-            };
+        let keyedProducts = {};
 
-            q.push([{type: 'home', url: 'https://store.muse.mu/eu/'}]);
+        for (const product of products) {
+            keyedProducts[product.entry_id] = product;
+        }
 
-        });
+        this.dataEntries = Object.values(keyedProducts)
+
+        return this
     }
 
-    parseResponse(requestDetails, responseBody) {
-        var tasks = [];
-        var dataEntries = [];
+    parseHomeResponse(response) {
+        let $ = cheerio.load(response);
 
-        if (requestDetails.type === 'home') {
-            let $ = cheerio.load(responseBody);
+        let urls = [];
 
-            $('ul#nav > li > a.level-top').each((i, v) => {
-                tasks.push({
-                    url: $(v).attr('href') + '?limit=all',
-                    type: 'category'
-                });
+        $('ul#nav > li > a.level-top').each((i, v) => {
+            urls.push($(v).attr('href') + '?limit=all');
+        });
+
+        return urls;
+    }
+
+    parseCategoryResponse(response) {
+        let $ = cheerio.load(response);
+
+        let data = [];
+
+        $('li.item').each((i, v) => {
+            data.push({
+                entry_id: $(v).attr('data-product_id'),
+                entry_text: $(v).find('a').eq(0).attr('title'),
+                entry_link: $(v).find('a').eq(0).attr('href'),
+                entry_image_url: $(v).find('a > img').eq(0).attr('src')
             });
-        }
+        });
 
-        if (requestDetails.type === 'category') {
-            let $ = cheerio.load(responseBody);
-
-            $('li.item').each((i, v) => {
-
-                // TODO: Key each entry with entry_id to avoid duplicates and errors of duplicate inserts (when initially ran)
-                dataEntries.push({
-                    entry_id: $(v).attr('data-product_id'),
-                    entry_text: $(v).find('a').eq(0).attr('title'),
-                    entry_link: $(v).find('a').eq(0).attr('href'),
-                    entry_image_url: $(v).find('a > img').eq(0).attr('src')
-                });
-
-            });
-        }
-
-        return {tasks: tasks, dataEntries: dataEntries};
+        return data;
     }
 
     composeNotificationMessage(entry) {
         return {
             title: `${this.getRoleIdNotifyString()} New item on shop.muse.mu`,
             embed: {
-                "title": entry.entry_text,
+                "title": `${entry.entry_text} (${entry.entry_shop_key} Shop)`,
                 "type": "rich",
                 "url": `${entry.entry_link}`,
                 "color": "0",
@@ -117,7 +125,6 @@ class ShopMuseTrackerProxied extends Tracker {
             }
         };
     }
-
 }
 
 module.exports = ShopMuseTrackerProxied;
