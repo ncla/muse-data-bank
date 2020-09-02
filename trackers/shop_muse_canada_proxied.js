@@ -15,7 +15,7 @@ class ShopMuseCanadaTrackerProxied extends Tracker {
         this.dbTable = 'shop_muse';
 
         this.dbCheckAgainst = {
-            entry_id: 'entry_text'
+            entry_id: 'entry_id'
         };
 
         this.columnsToInsert = ['entry_id', 'entry_text'];
