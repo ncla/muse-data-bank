@@ -206,10 +206,12 @@ readOptionsFile.then(function (data) {
             winston.profile('all-trackers');
 
             if (argv.nonotify === true || argv.silent === true) {
-                winston.info('Not sending notifications');
+                return winston.info('Not sending notifications');
             } else {
-                NotifyManager.notify();
+                return NotifyManager.notify();
             }
-    });
+    }).then(() => {
+        process.exit()
+    })
 
 }).catch((err) => { console.error(err, err.stack); });
