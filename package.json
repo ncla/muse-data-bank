@@ -10,7 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "async": "^2.1.2",
-    "axios": "^0.19.2",
+    "axios": "^0.21.1",
     "bluebird": "^3.5.0",
     "cheerio": "^1.0.0-rc.2",
     "dedent-js": "^1.0.1",
