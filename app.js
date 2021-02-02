@@ -42,7 +42,6 @@ var fs = require('fs');
 var stripJsonComments = require('strip-json-comments');
 
 var winston = require('winston');
-require('winston-daily-rotate-file');
 
 winston.configure({
     transports: [
@@ -54,26 +53,19 @@ winston.configure({
             humanReadableUnhandledException: true,
             level: 'debug'
         }),
-        new winston.transports.DailyRotateFile({
-            name: 'daily-all-file',
-            filename: './logs/log',
-            datePattern: 'yyyy-MM-dd.',
-            prepend: true,
-            level: 'debug',
-            json: false,
-            maxDays: 3
-        }),
-        new winston.transports.DailyRotateFile({
-            name: 'daily-error-file',
-            filename: './logs/error',
-            datePattern: 'yyyy-MM-dd.',
-            prepend: true,
+        new winston.transports.File({
+            name: 'file.error',
+            filename: './logs/error.log',
             level: 'error',
-            handleExceptions: true,
-            humanReadableUnhandledException: true,
-            prettyPrint: true,
+            prepend: true,
             json: false,
-            maxDays: 3
+        }),
+        new winston.transports.File({
+            name: 'file.debug',
+            filename: './logs/debug.log',
+            level: 'debug',
+            prepend: true,
+            json: false,
         }),
     ]
 });
