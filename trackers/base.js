@@ -75,7 +75,7 @@ class Tracker
                     }
                 }, this);
 
-                return knex.insert(reMapped).returning('id').into(this.dbTable)
+                return knex.insert(reMapped).into(this.dbTable)
                     .catch((err) => winston.error('DB Error', err, err.stack));
             } else {
                 return Promise.resolve();
