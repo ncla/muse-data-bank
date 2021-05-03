@@ -1,9 +1,7 @@
 "use strict";
 
 var Tracker = require('./base');
-const axios = require('axios').default;
-var convertXml = require('xml-js');
-let SocksProxyAgent = require('socks-proxy-agent');
+const puppeteer = require('puppeteer');
 
 class ShopSitemapMuseTrackerProxied extends Tracker {
     constructor(credentials, usersToTrack, roleId, proxy) {
@@ -28,40 +26,25 @@ class ShopSitemapMuseTrackerProxied extends Tracker {
         return this;
     }
 
-    pullData() {
-        const proxy = this.proxy.split(":");
-        const httpsAgent = new SocksProxyAgent({host: proxy[0], port: proxy[1]});
-        const axiosClient = axios.create(httpsAgent)
+    async pullData() {
+        const browser = await puppeteer.launch();
+        const page = await browser.newPage();
 
-        return axiosClient({
-            method: 'get',
-            url: 'https://store.muse.mu/sitemap.xml',
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:77.0) Gecko/20100101 Firefox/77.0',
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-                'Accept-Language': 'en-US,en;q=0.5',
-                'Accept-Encoding': 'gzip, deflate, br',
-                'Connection': 'keep-alive',
-                'Upgrade-Insecure-Requests': '1',
-                'Pragma': 'no-cache',
-                'Cache-Control': 'no-cache',
-                'TE': 'Trailers'
-            }
-        }).then(response => {
-            let options = {
-                compact: true,
-                ignoreDeclaration: true,
-                ignoreAttributes: true
-            }
+        await page.goto('https://store.muse.mu/sitemap.xml');
 
-            let parsed = convertXml.xml2js(response.data, options);
-
-            parsed.urlset.url.forEach(item => {
-                this.dataEntries.push({
-                    url: item.loc._text
-                });
-            });
+        const urls = await page.evaluate(() => {
+            return Array.from(document.querySelectorAll('.opened > .line:first-child span:not(.html-tag)')).map(el => {
+                return el.innerText;
+            })
         })
+
+        this.dataEntries = urls.map(url => {
+            return {
+                url: url
+            }
+        })
+
+        return this;
     }
 
     composeNotificationMessage(entry) {
