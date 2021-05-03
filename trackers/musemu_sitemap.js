@@ -5,6 +5,7 @@ const axios = require('axios').default;
 var convertXml = require('xml-js');
 let SocksProxyAgent = require('socks-proxy-agent');
 const Promise = require('bluebird');
+const puppeteer = require('puppeteer');
 
 class MuseSitemapTracker extends Tracker {
     constructor(credentials, usersToTrack, roleId, proxy) {
@@ -29,41 +30,27 @@ class MuseSitemapTracker extends Tracker {
         return this;
     }
 
-    pullData() {
-        const proxy = this.proxy.split(":");
-        const httpsAgent = new SocksProxyAgent({host: proxy[0], port: proxy[1]});
-        const axiosClient = axios.create(httpsAgent)
-        const requestHeaders = {
-            'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:77.0) Gecko/20100101 Firefox/77.0',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-            'Accept-Language': 'en-US,en;q=0.5',
-            'Accept-Encoding': 'gzip, deflate, br',
-            'Connection': 'keep-alive',
-            'Upgrade-Insecure-Requests': '1',
-            'Pragma': 'no-cache',
-            'Cache-Control': 'no-cache',
-            'TE': 'Trailers'
-        };
+    async pullData() {
+        const browser = await puppeteer.launch();
+        const page = await browser.newPage();
 
-        return axiosClient({
-            method: 'get',
-            url: 'https://www.muse.mu/sitemap.xml',
-            headers: requestHeaders
-        }).then(response => {
-            // let options = {
-            //     compact: true,
-            //     ignoreDeclaration: true,
-            //     ignoreAttributes: true
-            // }
-            console.log(response.data)
-            let parsed = convertXml.xml2js(response.data, options);
+        await page.goto('https://www.muse.mu/sitemap.xml');
 
-            parsed.urlset.url.forEach(item => {
-                this.dataEntries.push({
-                    url: item.loc._text
-                });
-            });
+        const urls = await page.evaluate(() => {
+            return Array.from(document.querySelectorAll('table a')).map(el => {
+                return el.getAttribute('href')
+            })
         })
+
+        await browser.close();
+
+        this.dataEntries = urls.map(url => {
+            return {
+                url: url
+            }
+        })
+
+        return this;
     }
 
     composeNotificationMessage(entry) {
