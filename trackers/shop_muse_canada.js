@@ -35,6 +35,8 @@ class ShopMuseCanadaTracker extends Tracker {
         let products = [];
         let categoryUrls = [];
 
+        delete requestHeaders['Accept-Encoding']
+
         await axiosClient({
             method: 'get',
             url: 'https://store.warnermusic.ca/collections/muse/',
