@@ -1,11 +1,8 @@
 "use strict";
 
 var Tracker = require('./base');
-let cheerio = require('cheerio');
-let SocksProxyAgent = require('socks-proxy-agent');
-const axios = require('axios').default;
-const requestHeaders = require('./helpers').requestHeaders
 var winston = require('winston');
+const puppeteer = require('puppeteer');
 
 class ShopMuseTrackerProxied extends Tracker {
     constructor(credentials, usersToTrack, roleId, proxy) {
@@ -27,10 +24,6 @@ class ShopMuseTrackerProxied extends Tracker {
     }
 
     async pullData() {
-        const proxy = this.proxy.split(":");
-        const httpsAgent = new SocksProxyAgent({host: proxy[0], port: proxy[1]});
-        const axiosClient = axios.create(httpsAgent)
-
         const sites = [
             {
                 'url': 'https://store.muse.mu/eu/',
@@ -44,32 +37,29 @@ class ShopMuseTrackerProxied extends Tracker {
 
         let products = [];
 
-        for (const site of sites) {
-            let categoryUrls = [];
+        const browser = await puppeteer.launch();
+        const page = await browser.newPage();
 
-            await axiosClient({
-                method: 'get',
-                url: site.url,
-                headers: requestHeaders
-            }).then(response => {
-                categoryUrls = this.parseHomeResponse(response.data);
-            })
+        for (const site of sites) {
+            await page.goto(site.url);
+
+            const categoryUrls = await this.parseHomeResponse(page);
 
             for (const categoryUrl of categoryUrls) {
-                await axiosClient({
-                    method: 'get',
-                    url: categoryUrl,
-                    headers: requestHeaders
-                }).then(response => {
-                    const parsed = this.parseCategoryResponse(response.data)
-                    winston.debug(`${this.constructor.name} :: Items count ${parsed.length}, URL ${categoryUrl}`);
-                    parsed.forEach(product => {
-                        product.entry_shop_key = site.key
-                        products.push(product)
-                    })
+                await page.goto(categoryUrl);
+
+                const productList = await this.parseCategoryResponse(page);
+
+                winston.debug(`${this.constructor.name} :: Items count ${productList.length}, URL ${categoryUrl}`);
+
+                productList.forEach(product => {
+                    product.entry_shop_key = site.key
+                    products.push(product)
                 })
             }
         }
+
+        await browser.close();
 
         let keyedProducts = {};
 
@@ -82,33 +72,25 @@ class ShopMuseTrackerProxied extends Tracker {
         return this
     }
 
-    parseHomeResponse(response) {
-        let $ = cheerio.load(response);
-
-        let urls = [];
-
-        $('ul#nav > li > a.level-top').each((i, v) => {
-            urls.push($(v).attr('href') + '?limit=all');
+    async parseHomeResponse(page) {
+        return await page.evaluate(() => {
+            return Array.from(document.querySelectorAll('ul#nav > li > a.level-top')).map(el => {
+                return el.getAttribute('href') + '?limit=all';
+            })
         });
-
-        return urls;
     }
 
-    parseCategoryResponse(response) {
-        let $ = cheerio.load(response);
-
-        let data = [];
-
-        $('li.item').each((i, v) => {
-            data.push({
-                entry_id: $(v).attr('data-product_id'),
-                entry_text: $(v).find('a').eq(0).attr('title'),
-                entry_link: $(v).find('a').eq(0).attr('href'),
-                entry_image_url: $(v).find('a > img').eq(0).attr('src')
-            });
-        });
-
-        return data;
+    async parseCategoryResponse(page) {
+        return await page.evaluate(() => {
+            return Array.from(document.querySelectorAll('li.item')).map(el => {
+                return {
+                    entry_id: el.getAttribute('data-product_id'),
+                    entry_text: el.querySelector('a').getAttribute('title'),
+                    entry_link: el.querySelector('a').getAttribute('href'),
+                    entry_image_url: el.querySelector('a > img').getAttribute('src')
+                }
+            })
+        })
     }
 
     composeNotificationMessage(entry) {
