@@ -1,11 +1,10 @@
 "use strict";
 
 var Tracker = require('./base');
-const axios = require('axios').default;
-var convertXml = require('xml-js');
+const puppeteer = require('puppeteer');
 
 class ShopSitemapMuseTracker extends Tracker {
-    constructor(credentials, usersToTrack, roleId) {
+    constructor(credentials, usersToTrack, roleId, proxy) {
         super(credentials, usersToTrack);
 
         this.usersToTrack = usersToTrack;
@@ -22,25 +21,32 @@ class ShopSitemapMuseTracker extends Tracker {
 
         this.pingableRoleId = roleId;
 
+        this.proxy = proxy;
+
         return this;
     }
 
-    pullData() {
-        return axios.get('https://store.muse.mu/sitemap.xml').then(response => {
-            let options = {
-                compact: true,
-                ignoreDeclaration: true,
-                ignoreAttributes: true
-            }
+    async pullData() {
+        const browser = await puppeteer.launch();
+        const page = await browser.newPage();
 
-            let parsed = convertXml.xml2js(response.data, options);
+        await page.goto('https://store.muse.mu/sitemap.xml');
 
-            parsed.urlset.url.forEach(item => {
-                this.dataEntries.push({
-                    url: item.loc._text
-                });
-            });
+        const urls = await page.evaluate(() => {
+            return Array.from(document.querySelectorAll('.opened > .line:first-child span:not(.html-tag)')).map(el => {
+                return el.innerText;
+            })
         })
+
+        await browser.close();
+
+        this.dataEntries = urls.map(url => {
+            return {
+                url: url
+            }
+        })
+
+        return this;
     }
 
     composeNotificationMessage(entry) {

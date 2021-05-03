@@ -8,7 +8,7 @@ const requestHeaders = require('./helpers').requestHeaders
 var winston = require('winston');
 const url = require('url');
 
-class ShopMuseCanadaTrackerProxied extends Tracker {
+class ShopMuseCanadaTracker extends Tracker {
     constructor(credentials, usersToTrack, roleId, proxy) {
         super(credentials, usersToTrack);
 
@@ -122,4 +122,4 @@ class ShopMuseCanadaTrackerProxied extends Tracker {
     }
 }
 
-module.exports = ShopMuseCanadaTrackerProxied;
+module.exports = ShopMuseCanadaTracker;

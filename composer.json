@@ -1,6 +1,0 @@
-{
-    "require": {
-        "mgp25/instagram-php": "dev-master",
-        "nesbot/carbon": "^2.5"
-    }
-}

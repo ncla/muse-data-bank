@@ -50,12 +50,12 @@ class MuseSitemapTracker extends Tracker {
             url: 'https://www.muse.mu/sitemap.xml',
             headers: requestHeaders
         }).then(response => {
-            let options = {
-                compact: true,
-                ignoreDeclaration: true,
-                ignoreAttributes: true
-            }
-
+            // let options = {
+            //     compact: true,
+            //     ignoreDeclaration: true,
+            //     ignoreAttributes: true
+            // }
+            console.log(response.data)
             let parsed = convertXml.xml2js(response.data, options);
 
             parsed.urlset.url.forEach(item => {

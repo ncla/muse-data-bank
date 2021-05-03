@@ -1,15 +1,11 @@
 "use strict";
 
 var Tracker = require('./base');
-var request = require('request');
-var moment = require('moment');
-const url = require('url');
-let cheerio = require('cheerio');
-var async = require('async');
 var winston = require('winston');
+const puppeteer = require('puppeteer');
 
 class ShopMuseTracker extends Tracker {
-    constructor(credentials, usersToTrack, roleId) {
+    constructor(credentials, usersToTrack, roleId, proxy) {
         super(credentials, usersToTrack);
 
         this.dbTable = 'shop_muse';
@@ -22,83 +18,86 @@ class ShopMuseTracker extends Tracker {
 
         this.pingableRoleId = roleId;
 
+        this.proxy = proxy;
+
         return this;
     }
 
-    pullData() {
-        return new Promise((resolve, reject) => {
-            var q = async.queue((task, callback) => {
-                request({
-                    url: task.url,
-                    method: 'GET',
-                    timeout: (30 * 1000)
-                }, (error, response, body) => {
-                    if (error) {
-                        reject(error);
-                    }
+    async pullData() {
+        const sites = [
+            {
+                'url': 'https://store.muse.mu/eu/',
+                'key': 'EU',
+            },
+            {
+                'url': 'https://usstore.muse.mu/',
+                'key': 'US'
+            }
+        ];
 
-                    var parsed = this.parseResponse(task, body);
+        let products = [];
 
-                    q.push(parsed.tasks);
+        const browser = await puppeteer.launch();
+        const page = await browser.newPage();
 
-                    if (parsed.dataEntries.length) {
-                        this.dataEntries = this.dataEntries.concat(parsed.dataEntries);
-                    }
+        for (const site of sites) {
+            await page.goto(site.url);
 
-                    callback();
-                });
+            const categoryUrls = await this.parseHomeResponse(page);
 
-            }, 5);
+            for (const categoryUrl of categoryUrls) {
+                await page.goto(categoryUrl);
 
-            q.drain = () => {
-                console.log(this.constructor.name + ' :: All queue items have been processed');
-                resolve();
-            };
+                const productList = await this.parseCategoryResponse(page);
 
-            q.push([{type: 'home', url: 'https://store.muse.mu/eu/'}]);
+                winston.debug(`${this.constructor.name} :: Items count ${productList.length}, URL ${categoryUrl}`);
 
+                productList.forEach(product => {
+                    product.entry_shop_key = site.key
+                    products.push(product)
+                })
+            }
+        }
+
+        await browser.close();
+
+        let keyedProducts = {};
+
+        for (const product of products) {
+            keyedProducts[product.entry_id] = product;
+        }
+
+        this.dataEntries = Object.values(keyedProducts)
+
+        return this
+    }
+
+    async parseHomeResponse(page) {
+        return await page.evaluate(() => {
+            return Array.from(document.querySelectorAll('ul#nav > li > a.level-top')).map(el => {
+                return el.getAttribute('href') + '?limit=all';
+            })
         });
     }
 
-    parseResponse(requestDetails, responseBody) {
-        var tasks = [];
-        var dataEntries = [];
-
-        if (requestDetails.type === 'home') {
-            let $ = cheerio.load(responseBody);
-
-            $('ul#nav > li > a.level-top').each((i, v) => {
-                tasks.push({
-                    url: $(v).attr('href') + '?limit=all',
-                    type: 'category'
-                });
-            });
-        }
-
-        if (requestDetails.type === 'category') {
-            let $ = cheerio.load(responseBody);
-
-            $('li.item').each((i, v) => {
-
-                // TODO: Key each entry with entry_id to avoid duplicates and errors of duplicate inserts (when initially ran)
-                dataEntries.push({
-                    entry_id: $(v).attr('data-product_id'),
-                    entry_text: $(v).find('a').eq(0).attr('title'),
-                    entry_link: $(v).find('a').eq(0).attr('href'),
-                    entry_image_url: $(v).find('a > img').eq(0).attr('src')
-                });
-
-            });
-        }
-
-        return {tasks: tasks, dataEntries: dataEntries};
+    async parseCategoryResponse(page) {
+        return await page.evaluate(() => {
+            return Array.from(document.querySelectorAll('li.item')).map(el => {
+                return {
+                    entry_id: el.getAttribute('data-product_id'),
+                    entry_text: el.querySelector('a').getAttribute('title'),
+                    entry_link: el.querySelector('a').getAttribute('href'),
+                    entry_image_url: el.querySelector('a > img').getAttribute('src')
+                }
+            })
+        })
     }
 
     composeNotificationMessage(entry) {
         return {
             title: `${this.getRoleIdNotifyString()} New item on shop.muse.mu`,
             embed: {
-                "title": entry.entry_text,
+                "title": `${entry.entry_text} (${entry.entry_shop_key} Shop)`,
                 "type": "rich",
                 "url": `${entry.entry_link}`,
                 "color": "0",
@@ -108,7 +107,6 @@ class ShopMuseTracker extends Tracker {
             }
         };
     }
-
 }
 
 module.exports = ShopMuseTracker;

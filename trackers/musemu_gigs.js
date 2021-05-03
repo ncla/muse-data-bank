@@ -7,9 +7,11 @@ var rssParser = require('rss-parser');
 const url = require('url');
 var winston = require('winston');
 let cheerio = require('cheerio');
+let SocksProxyAgent = require('socks-proxy-agent');
+const axios = require('axios').default;
 
 class MuseGigTracker extends Tracker {
-    constructor(credentials, usersToTrack, roleId) {
+    constructor(credentials, usersToTrack, roleId, proxy) {
         super(credentials, usersToTrack);
 
         this.dbTable = 'musemu_gigs';
@@ -23,23 +25,29 @@ class MuseGigTracker extends Tracker {
 
         this.pingableRoleId = roleId;
 
+        this.proxy = proxy;
+
         return this;
     }
 
     pullData() {
+        const proxy = this.proxy.split(":");
+        const httpsAgent = new SocksProxyAgent({host: proxy[0], port: proxy[1]});
+        const axiosClient = axios.create(httpsAgent);
+
         const loop = async () => {
             let result = null;
             let page = 0;
 
             while (result !== true) {
-                await request({
+                await axiosClient({
                     url: `http://www.muse.mu/tour?page=${page}`,
                     method: 'GET',
                     timeout: (30 * 1000)
-                }).then(r => {
-                    winston.debug(`${this.constructor.name} :: Response length ${r.length}`);
+                }).then(response => {
+                    winston.debug(`${this.constructor.name} :: Response length ${response.data.length}`);
 
-                    let $ = cheerio.load(r);
+                    let $ = cheerio.load(response.data);
                     let items = $('.block-TOUR-DATES .view-content .item-list ul li');
 
                     winston.debug(`${this.constructor.name} :: Items count ${items.length}`);

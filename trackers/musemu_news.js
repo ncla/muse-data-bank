@@ -7,9 +7,11 @@ var rssParser = require('rss-parser');
 const url = require('url');
 var winston = require('winston');
 let cheerio = require('cheerio');
+let SocksProxyAgent = require('socks-proxy-agent');
+const axios = require('axios').default;
 
 class MuseNewsTracker extends Tracker {
-    constructor(credentials, usersToTrack, roleId) {
+    constructor(credentials, usersToTrack, roleId, proxy) {
         super(credentials, usersToTrack);
 
         this.dbTable = 'musemu_news';
@@ -23,19 +25,25 @@ class MuseNewsTracker extends Tracker {
 
         this.pingableRoleId = roleId;
 
+        this.proxy = proxy;
+
         return this;
     }
 
     pullData() {
+        const proxy = this.proxy.split(":");
+        const httpsAgent = new SocksProxyAgent({host: proxy[0], port: proxy[1]});
+        const axiosClient = axios.create(httpsAgent);
+
         // TODO in future: Fetch each news page for more rich embed
-        return request({
+        return axiosClient({
             url: `http://www.muse.mu/news`,
             method: 'GET',
             timeout: (30 * 1000)
-        }).then(r => {
-            winston.debug(`${this.constructor.name} :: Response length ${r.length}`);
+        }).then(response => {
+            winston.debug(`${this.constructor.name} :: Response length ${response.data.length}`);
 
-            let $ = cheerio.load(r);
+            let $ = cheerio.load(response.data);
             let items = $('#block-system-main .view-content .item-list ul li')
 
             items.each((i, v) => {
