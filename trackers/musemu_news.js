@@ -37,7 +37,7 @@ class MuseNewsTracker extends Tracker {
 
         // TODO in future: Fetch each news page for more rich embed
         return axiosClient({
-            url: `http://www.muse.mu/news`,
+            url: `https://www.muse.mu/news`,
             method: 'GET',
             timeout: (30 * 1000)
         }).then(response => {
