@@ -38,6 +38,8 @@ class ShopSitemapMuseTrackerProxied extends Tracker {
             })
         })
 
+        await browser.close();
+
         this.dataEntries = urls.map(url => {
             return {
                 url: url
