@@ -58,20 +58,10 @@ class MuseSitemapTracker extends Tracker {
 
             let parsed = convertXml.xml2js(response.data, options);
 
-            return Promise.map(parsed.sitemapindex.sitemap, (sitemap) => {
-                return axiosClient({
-                    method: 'get',
-                    url: sitemap.loc._text,
-                    headers: requestHeaders
-                }).then(response => {
-                    let parsed = convertXml.xml2js(response.data, options);
-
-                    parsed.urlset.url.forEach(item => {
-                        this.dataEntries.push({
-                            url: item.loc._text
-                        });
-                    });
-                })
+            parsed.urlset.url.forEach(item => {
+                this.dataEntries.push({
+                    url: item.loc._text
+                });
             });
         })
     }
