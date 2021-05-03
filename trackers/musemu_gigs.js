@@ -41,7 +41,7 @@ class MuseGigTracker extends Tracker {
 
             while (result !== true) {
                 await axiosClient({
-                    url: `http://www.muse.mu/tour?page=${page}`,
+                    url: `https://www.muse.mu/tour?page=${page}`,
                     method: 'GET',
                     timeout: (30 * 1000)
                 }).then(response => {
