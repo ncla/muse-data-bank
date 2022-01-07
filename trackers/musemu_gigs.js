@@ -1,14 +1,9 @@
 "use strict";
 
-var Tracker = require('./base');
-var request = require('request-promise-native');
-var moment = require('moment');
-var rssParser = require('rss-parser');
-const url = require('url');
-var winston = require('winston');
-let cheerio = require('cheerio');
-let SocksProxyAgent = require('socks-proxy-agent');
-const axios = require('axios').default;
+const Tracker = require('./base');
+const moment = require('moment');
+const winston = require('winston');
+const puppeteer = require('puppeteer');
 
 class MuseGigTracker extends Tracker {
     constructor(credentials, usersToTrack, roleId, proxy) {
@@ -30,49 +25,59 @@ class MuseGigTracker extends Tracker {
         return this;
     }
 
-    pullData() {
-        const proxy = this.proxy.split(":");
-        const httpsAgent = new SocksProxyAgent({host: proxy[0], port: proxy[1]});
-        const axiosClient = axios.create(httpsAgent);
+    async pullData() {
+        let reachedLastPage = false;
+        let pageNumber = 0;
 
-        const loop = async () => {
-            let result = null;
-            let page = 0;
+        const browser = await puppeteer.launch();
 
-            while (result !== true) {
-                await axiosClient({
-                    url: `https://www.muse.mu/tour?page=${page}`,
-                    method: 'GET',
-                    timeout: (30 * 1000)
-                }).then(response => {
-                    winston.debug(`${this.constructor.name} :: Response length ${response.data.length}`);
+        const page = await browser.newPage();
 
-                    let $ = cheerio.load(response.data);
-                    let items = $('.block-TOUR-DATES .view-content .item-list ul li');
+        while (reachedLastPage === false) {
+            const url = `https://www.muse.mu/tour?page=${pageNumber}`
 
-                    winston.debug(`${this.constructor.name} :: Items count ${items.length}`);
+            await page.goto(url);
+    
+            const gigs = await this.parseTourPageElements(page);
+    
+            gigs.map(data => {
+                // Because we can't have moment instance in page context easily, we remap here in our apps context
+                data.entry_created_at = moment(data.entry_created_at).format('YYYY-MM-DD HH:mm:ss')
+                return data
+            })
 
-                    items.each((i, v) => {
-                        var link = $(v).find('.tourMoreInfoLink').attr('href');
+            winston.debug(`${this.constructor.name} :: Items count ${gigs.length}, URL ${url}`);
 
-                        this.dataEntries.push({
-                            entry_id: url.parse(link).pathname.replace('/tour-date/', ''),
-                            entry_text: `${$(v).find('.tourtitle').text().trim()}, ${$(v).find('.tourCity').text().trim()}`,
-                            entry_link: url.resolve('https://muse.mu', link),
-                            entry_created_at: moment($(v).find('.date-display-single').eq(0).attr('content')).format('YYYY-MM-DD HH:mm:ss'),
-                        });
-                    });
+            this.dataEntries = this.dataEntries.concat(gigs);
 
-                    if (items.length === 0) {
-                        result = true;
-                    }
-                });
-
-                page++;
+            // Prevent too much DoS if the logic for determining last page is incorrect
+            if (gigs.length === 0 || pageNumber === 10) {
+                reachedLastPage = true;
+                return;
             }
-        };
 
-        return loop();
+            pageNumber++;
+        }
+
+        return this;
+    }
+
+    async parseTourPageElements(page) {
+        const selector = '.block-TOUR-DATES .view-content .item-list ul li';
+
+        return await page.evaluate(selector => {
+            return Array.from(document.querySelectorAll(selector)).map(el => {
+                const link = el.querySelector('.tourMoreInfoLink').getAttribute('href');
+
+                return {
+                    // new instance of URL is run within the page context!
+                    entry_id: new URL(link, 'https://muse.mu').pathname.replace('/tour-date/', ''),
+                    entry_text: `${el.querySelector('.tourtitle').innerText.trim()}, ${el.querySelector('.tourCity').innerText.trim()}`,
+                    entry_link: new URL(link, 'https://muse.mu').href,
+                    entry_created_at: el.querySelector('.date-display-single').getAttribute('content'),
+                }
+            })
+        }, selector);
     }
 
     composeNotificationMessage(entry) {

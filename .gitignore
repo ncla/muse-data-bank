@@ -8,3 +8,4 @@ dime.json
 npm-debug.log
 vendor/*
 yarn-error.log
+.history/

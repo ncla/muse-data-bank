@@ -10,7 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "async": "^2.1.2",
-    "axios": "^0.21.1",
+    "axios": "^0.24.0",
     "bluebird": "^3.5.0",
     "cheerio": "^1.0.0-rc.2",
     "dedent-js": "^1.0.1",
@@ -19,7 +19,7 @@
     "knex": "^0.21.0",
     "moment": "^2.16.0",
     "promise-retry": "^1.1.1",
-    "puppeteer": "^9.0.0",
+    "puppeteer": "^13.0.1",
     "request": "^2.78.0",
     "request-promise-native": "^1.0.4",
     "rss-parser": "^2.5.2",
