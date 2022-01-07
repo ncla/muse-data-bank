@@ -1,14 +1,8 @@
 "use strict";
 
 var Tracker = require('./base');
-var request = require('request-promise-native');
-var moment = require('moment');
-var rssParser = require('rss-parser');
-const url = require('url');
 var winston = require('winston');
-let cheerio = require('cheerio');
-let SocksProxyAgent = require('socks-proxy-agent');
-const axios = require('axios').default;
+const puppeteer = require('puppeteer');
 
 class MuseNewsTracker extends Tracker {
     constructor(credentials, usersToTrack, roleId, proxy) {
@@ -30,32 +24,39 @@ class MuseNewsTracker extends Tracker {
         return this;
     }
 
-    pullData() {
-        const proxy = this.proxy.split(":");
-        const httpsAgent = new SocksProxyAgent({host: proxy[0], port: proxy[1]});
-        const axiosClient = axios.create(httpsAgent);
+    async pullData() {
+        const url = 'https://www.muse.mu/news'
 
-        // TODO in future: Fetch each news page for more rich embed
-        return axiosClient({
-            url: `https://www.muse.mu/news`,
-            method: 'GET',
-            timeout: (30 * 1000)
-        }).then(response => {
-            winston.debug(`${this.constructor.name} :: Response length ${response.data.length}`);
+        const browser = await puppeteer.launch();
 
-            let $ = cheerio.load(response.data);
-            let items = $('#block-system-main .view-content .item-list ul li')
+        const page = await browser.newPage();
 
-            items.each((i, v) => {
-                var link = $(v).find('.thumbnailWrapper').attr('href');
+        await page.goto(url);
 
-                this.dataEntries.push({
-                    entry_id: url.parse(link).path.replace('/news/', ''),
-                    entry_text: `${$(v).find('.blogTitle').text().trim()}`,
-                    entry_link: url.resolve('http://muse.mu', link),
-                });
-            });
-        });
+        const news = await this.parseNewsPageElements(page);
+
+        winston.debug(`${this.constructor.name} :: Items count ${news.length}, URL ${url}`);
+
+        this.dataEntries = news
+
+        return this
+    }
+
+    async parseNewsPageElements(page) {
+        const selector = '#block-system-main .view-content .item-list ul li';
+
+        return await page.evaluate(selector => {
+            return Array.from(document.querySelectorAll(selector)).map(el => {
+                const link = el.querySelector('.thumbnailWrapper').getAttribute('href');
+
+                return {
+                    // new instance of URL is run within the page context!
+                    entry_id: new URL(link, 'https://muse.mu').pathname.replace('/news/', ''),
+                    entry_text: `${el.querySelector('.blogTitle').innerText.trim()}`,
+                    entry_link: new URL(link, 'https://muse.mu').href,
+                }
+            })
+        }, selector);
     }
 
     composeNotificationMessage(entry) {
