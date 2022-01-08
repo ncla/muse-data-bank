@@ -1,12 +1,8 @@
 "use strict";
 
-var Tracker = require('./base');
-let cheerio = require('cheerio');
-let SocksProxyAgent = require('socks-proxy-agent');
-const axios = require('axios').default;
-const requestHeaders = require('./helpers').requestHeaders
-var winston = require('winston');
-const url = require('url');
+const Tracker = require('./base');
+const puppeteer = require('puppeteer');
+const winston = require('winston');
 
 class ShopMuseCanadaTracker extends Tracker {
     constructor(credentials, usersToTrack, roleId, proxy) {
@@ -28,33 +24,32 @@ class ShopMuseCanadaTracker extends Tracker {
     }
 
     async pullData() {
-        const proxy = this.proxy.split(":");
-        const httpsAgent = new SocksProxyAgent({host: proxy[0], port: proxy[1]});
-        const axiosClient = axios.create(httpsAgent)
+        const startUrl = 'https://store.warnermusic.ca/collections/muse/'
+
+        const browser = await puppeteer.launch();
+
+        const page = await browser.newPage();
 
         let products = [];
         let categoryUrls = [];
 
-        delete requestHeaders['Accept-Encoding']
+        winston.debug(`${this.constructor.name} :: Navigating to ${startUrl}`);
 
-        await axiosClient({
-            method: 'get',
-            url: 'https://store.warnermusic.ca/collections/muse/',
-            headers: requestHeaders
-        }).then(response => {
-            categoryUrls = this.parseHomeResponse(response.data);
-        })
+        await page.goto(startUrl);
+
+        categoryUrls = await this.parseHomeResponse(page);
+
+        winston.debug(`${this.constructor.name} :: Found ${categoryUrls.length} categories`);
 
         for (const categoryUrl of categoryUrls) {
-            await axiosClient({
-                method: 'get',
-                url: categoryUrl,
-                headers: requestHeaders
-            }).then(response => {
-                const parsed = this.parseCategoryResponse(response.data)
-                winston.debug(`${this.constructor.name} :: Items count ${parsed.length}, URL ${categoryUrl}`);
-                products = products.concat(parsed)
-            })
+            winston.debug(`${this.constructor.name} :: Navigating to ${categoryUrl}`);
+
+            await page.goto(categoryUrl);
+            const parsedProducts = await this.parseCategoryResponse(page)
+
+            winston.debug(`${this.constructor.name} :: Found ${parsedProducts.length} products`);
+
+            products = products.concat(parsedProducts)
         }
 
         let keyedProducts = {};
@@ -65,47 +60,39 @@ class ShopMuseCanadaTracker extends Tracker {
 
         this.dataEntries = Object.values(keyedProducts)
 
-        return this
+        return this;
     }
 
-    parseHomeResponse(response) {
-        let $ = cheerio.load(response);
-
-        let urls = [];
-
-        $('.main-menu > li > a').each((i, v) => {
-            urls.push(url.resolve('https://store.warnermusic.ca/', $(v).attr('href')));
+    async parseHomeResponse(page) {
+        return await page.evaluate(() => {
+            return Array.from(document.querySelectorAll('.main-menu > li > a')).map(el => {
+                return new URL(el.getAttribute('href'), 'https://store.warnermusic.ca/').href
+            })
         });
-
-        return urls;
     }
 
-    parseCategoryResponse(response) {
-        let $ = cheerio.load(response);
+    async parseCategoryResponse(page) {
+        return await page.evaluate(() => {
+            return Array.from(document.querySelectorAll('.product-list > li')).map(el => {
+                let image = null
+                const styleAttr = el.querySelector('.image').getAttribute('style')
 
-        let data = [];
+                if (styleAttr) {
+                    const matchUrl = styleAttr.match(/background-image:url\((.+)\)/i)
 
-        $('.product-list > li').each((i, v) => {
-            let image = null
-            const styleAttr = $(v).find('.image').eq(0).attr('style')
-
-            if (styleAttr) {
-                const matchUrl = styleAttr.match(/background-image:url\((.+)\)/i)
-
-                if (matchUrl[1]) {
-                    image = 'https:' + matchUrl[1]
+                    if (matchUrl[1]) {
+                        image = 'https:' + matchUrl[1]
+                    }
                 }
-            }
 
-            data.push({
-                entry_id: ('(CA) ' + $(v).find('figure[alt]').eq(0).attr('alt')).slice(0, 128), // meh
-                entry_text: $(v).find('figure[alt]').eq(0).attr('alt'),
-                entry_link: url.resolve('https://store.warnermusic.ca/', $(v).find('a.product-item-title').eq(0).attr('href')),
-                entry_image_url: image
-            });
+                return {
+                    entry_id: ('(CA) ' + el.querySelector('figure[alt]').getAttribute('alt')).slice(0, 128), // meh
+                    entry_text: el.querySelector('figure[alt]').getAttribute('alt'),
+                    entry_link:  new URL(el.querySelector('a.product-item-title').getAttribute('href'), 'https://store.warnermusic.ca/').href,
+                    entry_image_url: image
+                };
+            })
         });
-
-        return data;
     }
 
     composeNotificationMessage(entry) {
