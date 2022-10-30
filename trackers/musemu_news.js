@@ -43,7 +43,7 @@ class MuseNewsTracker extends Tracker {
     }
 
     async parseNewsPageElements(page) {
-        const selector = '#block-system-main .view-content .item-list ul li';
+        const selector = '.block-system-main-block .view-content .item-list ul li';
 
         return await page.evaluate(selector => {
             return Array.from(document.querySelectorAll(selector)).map(el => {
