@@ -1,7 +1,7 @@
 "use strict";
 
 const Tracker = require('./base');
-const moment = require('moment');
+const dayjs = require('dayjs')
 const winston = require('winston');
 const puppeteer = require('puppeteer');
 
@@ -42,7 +42,7 @@ class MuseGigTracker extends Tracker {
     
             gigs.map(data => {
                 // Because we can't have moment instance in page context easily, we remap here in our apps context
-                data.entry_created_at = moment(data.entry_created_at).format('YYYY-MM-DD HH:mm:ss')
+                data.entry_created_at = dayjs(data.entry_created_at).format('YYYY-MM-DD HH:mm:ss')
                 return data
             })
 
@@ -63,7 +63,7 @@ class MuseGigTracker extends Tracker {
     }
 
     async parseTourPageElements(page) {
-        const selector = '.block-TOUR-DATES .view-content .item-list ul li';
+        const selector = '.view-tour .view-content .item-list ul li';
 
         return await page.evaluate(selector => {
             return Array.from(document.querySelectorAll(selector)).map(el => {
@@ -74,7 +74,7 @@ class MuseGigTracker extends Tracker {
                     entry_id: new URL(link, 'https://muse.mu').pathname.replace('/tour-date/', ''),
                     entry_text: `${el.querySelector('.tourtitle').innerText.trim()}, ${el.querySelector('.tourCity').innerText.trim()}`,
                     entry_link: new URL(link, 'https://muse.mu').href,
-                    entry_created_at: el.querySelector('.date-display-single').getAttribute('content'),
+                    entry_created_at: el.querySelector('.event-date').text.trim(),
                 }
             })
         }, selector);
