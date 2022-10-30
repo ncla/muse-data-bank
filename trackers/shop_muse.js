@@ -26,13 +26,13 @@ class ShopMuseTracker extends Tracker {
     async pullData() {
         const sites = [
             {
-                'url': 'https://store.muse.mu/eu/',
+                'url': 'https://store.muse.mu/eu/search/?q=',
                 'key': 'EU',
             },
-            {
-                'url': 'https://usstore.muse.mu/',
-                'key': 'US'
-            }
+            // {
+            //     'url': 'https://usstore.muse.mu/',
+            //     'key': 'US'
+            // }
         ];
 
         let products = [];
@@ -43,20 +43,22 @@ class ShopMuseTracker extends Tracker {
         for (const site of sites) {
             await page.goto(site.url);
 
-            const categoryUrls = await this.parseHomeResponse(page);
+            winston.debug('Clicking show more button until button is no longer visible')
 
-            for (const categoryUrl of categoryUrls) {
-                await page.goto(categoryUrl);
-
-                const productList = await this.parseCategoryResponse(page);
-
-                winston.debug(`${this.constructor.name} :: Items count ${productList.length}, URL ${categoryUrl}`);
-
-                productList.forEach(product => {
-                    product.entry_shop_key = site.key
-                    products.push(product)
-                })
+            while (await this.isShowMoreButtonVisible(page)) {
+                winston.debug('Clicking..')
+                await this.clickShowMoreButton(page)
+                await new Promise(r => setTimeout(r, 1500))
             }
+
+            winston.debug('Show more button no more visible')
+
+            const productList = await this.parseSearchResults(page)
+
+            productList.forEach(product => {
+                product.entry_shop_key = site.key
+                products.push(product)
+            })
         }
 
         await browser.close();
@@ -72,24 +74,31 @@ class ShopMuseTracker extends Tracker {
         return this
     }
 
-    async parseHomeResponse(page) {
+    async parseSearchResults(page) {
         return await page.evaluate(() => {
-            return Array.from(document.querySelectorAll('ul#nav > li > a.level-top')).map(el => {
-                return el.getAttribute('href') + '?limit=all';
+            return Array.from(document.querySelectorAll('.product-grid .product')).map(el => {
+                return {
+                    entry_id: el.getAttribute('data-pid'),
+                    entry_text: el.querySelector('.pdp-link a.link').innerText.trim(),
+                    entry_link: new URL(
+                        el.querySelector('.pdp-link a.link').getAttribute('href'),
+                        'https://store.muse.mu/'
+                    ).href,
+                    entry_image_url: el.querySelector('.tile-image').getAttribute('src')
+                }
             })
+        })
+    }
+
+    async isShowMoreButtonVisible(page) {
+        return await page.evaluate(() => {
+            return document.querySelector('.show-more button') !== null
         });
     }
 
-    async parseCategoryResponse(page) {
+    async clickShowMoreButton(page) {
         return await page.evaluate(() => {
-            return Array.from(document.querySelectorAll('li.item')).map(el => {
-                return {
-                    entry_id: el.getAttribute('data-product_id'),
-                    entry_text: el.querySelector('a').getAttribute('title'),
-                    entry_link: el.querySelector('a').getAttribute('href'),
-                    entry_image_url: el.querySelector('a > img').getAttribute('src')
-                }
-            })
+            document.querySelector('.show-more button').click()
         })
     }
 
