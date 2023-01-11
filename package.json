@@ -16,7 +16,7 @@
     "dedent-js": "^1.0.1",
     "dotenv": "^4.0.0",
     "fb": "^2.0.0",
-    "knex": "^0.21.0",
+    "knex": "^2.4.0",
     "moment": "^2.16.0",
     "promise-retry": "^1.1.1",
     "puppeteer": "^13.0.1",
