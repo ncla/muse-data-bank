@@ -1,4 +1,5 @@
-**Note**: this project has shit code, I only care that it just works for r/Muse Discord server needs, that is all.
+> [!NOTE]  
+> This project is currently being rewritten to TypeScript with tests in Jest in repository [here](https://github.com/ncla/muse-discord-updates-bot-ts). While the code published here still works and publishes notifications to Discord channel, this was written in 2017 and I am not happy anymore with some of the code here.
 
 To run latest database migrations:
 
